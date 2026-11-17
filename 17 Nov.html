@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>POS Indonesia — 17 Nov</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;600;800&display=swap');
+  :root{--red:#D5321F;--blue:#1D3FBB;--yellow:#F2B705;--black:#141414;--paper:#F4EFE6;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#999;font-family:'Archivo',sans-serif;color:var(--black);}
+  .page{width:900px;min-height:1273px;background:var(--paper);margin:20px auto;position:relative;overflow:hidden;padding:40px 44px;}
+  h1,h2,h3,.num{font-family:'Archivo Black',sans-serif;}
+  /* header */
+  .head{display:flex;align-items:flex-start;gap:18px;}
+  .circle{width:110px;height:110px;border-radius:50%;background:var(--red);flex-shrink:0;}
+  .head h1{font-size:44px;line-height:.95;text-transform:uppercase;letter-spacing:-1px;}
+  .head .sub{margin-top:8px;font-weight:600;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--blue);}
+  .rule{height:6px;background:var(--black);margin:18px 0 20px;}
+  /* verdict */
+  .verdict{display:flex;gap:14px;margin-bottom:20px;}
+  .verdict .box{flex:1.6;background:var(--blue);color:var(--paper);padding:18px 20px;}
+  .verdict .box h2{color:var(--yellow);font-size:15px;letter-spacing:2px;margin-bottom:6px;}
+  .verdict .box p{font-size:13px;line-height:1.45;}
+  .verdict .box b{color:#fff;}
+  .tri{width:170px;flex-shrink:0;background:var(--yellow);padding:16px 18px;clip-path:polygon(0 0,100% 0,100% 100%,0 100%);}
+  .tri h2{font-size:12px;letter-spacing:2px;margin-bottom:6px;}
+  .tri p{font-size:12px;line-height:1.4;font-weight:600;}
+  /* top10 */
+  h3.sect{font-size:14px;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;border-left:14px solid var(--red);padding-left:10px;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 22px;margin-bottom:20px;}
+  .item{display:flex;align-items:center;gap:10px;background:#fff;border:2px solid var(--black);padding:7px 10px;}
+  .item .num{width:26px;height:26px;border-radius:50%;background:var(--black);color:var(--paper);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+  .item .nm{font-weight:800;font-size:13px;}
+  .item .ds{font-size:11px;color:#444;margin-left:auto;text-align:right;font-weight:600;}
+  .item.gold{border-color:var(--red);border-width:3px;background:#fff;}
+  .item.gold .num{background:var(--red);}
+  /* bar chart */
+  .chart{display:flex;gap:24px;margin-bottom:20px;}
+  .bars{flex:1.4;}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+  .bar .lb{width:110px;font-size:12px;font-weight:800;text-align:right;}
+  .bar .tr{height:20px;background:var(--blue);position:relative;flex:1;}
+  .bar:nth-child(2) .tr{background:var(--red);}
+  .bar:nth-child(3) .tr{background:var(--yellow);}
+  .bar:nth-child(4) .tr{background:var(--black);}
+  .bar:nth-child(5) .tr{background:var(--blue);opacity:.55;}
+  .bar .vl{font-size:11px;font-weight:800;position:absolute;right:6px;top:2px;color:#fff;}
+  .why{flex:1;background:var(--black);color:var(--paper);padding:16px 18px;}
+  .why h2{color:var(--yellow);font-size:12px;letter-spacing:2px;margin-bottom:8px;}
+  .why li{font-size:11.5px;line-height:1.5;margin-left:14px;margin-bottom:4px;}
+  /* footer */
+  .foot{display:flex;align-items:flex-end;gap:16px;border-top:6px solid var(--black);padding-top:12px;}
+  .semicircle{width:90px;height:45px;border-radius:90px 90px 0 0;background:var(--red);flex-shrink:0;}
+  .foot p{font-size:10.5px;line-height:1.5;font-weight:600;color:#333;}
+  .square{width:52px;height:52px;background:var(--yellow);border:3px solid var(--black);flex-shrink:0;margin-left:auto;}
+  .stamp{position:absolute;top:34px;right:40px;background:var(--paper);border:3px solid var(--blue);color:var(--blue);font-family:'Archivo Black',sans-serif;font-size:13px;padding:6px 10px;transform:rotate(6deg);}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="stamp">17 NOV 2026</div>
+  <div class="head">
+    <div class="circle"></div>
+    <div>
+      <h1>Market Leader<br>POS Indonesia</h1>
+      <div class="sub">Analisis 12 Sumber · One-Page Summary · Bauhaus</div>
+    </div>
+  </div>
+  <div class="rule"></div>
+
+  <div class="verdict">
+    <div class="box">
+      <h2>Pemenang: MOKA POS (GoTo)</h2>
+      <p><b>Mengapa terbaik:</b> dirujuk sebagai pemimpin di mayoritas sumber (iBOS #1, KenResearch Top-5, SoftwareSuggest #1). <b>45.000+ merchant</b>, ekosistem GoTo (GoPay/GoFood), mode offline, multi-outlet, dan integrasi pembayaran lokal terlengkap. Pilihan aman untuk F&amp;B &amp; retail multi-cabang.</p>
+    </div>
+    <div class="tri">
+      <h2>CATATAN</h2>
+      <p>Majoo unggul untuk all-in-one (ERP/SDM); Olsera untuk omnichannel; Qasir &amp; Loyverse untuk gratis.</p>
+    </div>
+  </div>
+
+  <h3 class="sect">Top 10 Market Leader POS</h3>
+  <div class="grid">
+    <div class="item gold"><div class="num">1</div><div class="nm">MOKA POS</div><div class="ds">GoTo · 45K+ merchant · cloud F&amp;B/retail</div></div>
+    <div class="item"><div class="num">2</div><div class="nm">MAJOO</div><div class="ds">All-in-one: POS+ERP+payroll</div></div>
+    <div class="item"><div class="num">3</div><div class="nm">OLSERA</div><div class="ds">Omnichannel + integrasi marketplace</div></div>
+    <div class="item"><div class="num">4</div><div class="nm">PAWOON</div><div class="ds">Online+offline · UMKM kuliner</div></div>
+    <div class="item"><div class="num">5</div><div class="nm">QASIR</div><div class="ds">Gratis→Pro · UMKM mikro</div></div>
+    <div class="item"><div class="num">6</div><div class="nm">ISELLER</div><div class="ds">Omnichannel retail &amp; F&amp;B</div></div>
+    <div class="item"><div class="num">7</div><div class="nm">ACCURATE POS</div><div class="ds">Bundling akuntansi · multi-cabang</div></div>
+    <div class="item"><div class="num">8</div><div class="nm">KASIR PINTAR</div><div class="ds">Murah · QRIS · mikro</div></div>
+    <div class="item"><div class="num">9</div><div class="num" style="display:none"></div><div class="nm">iREAP POS PRO</div><div class="ds">Android · retail &amp; franchise</div></div>
+    <div class="item"><div class="num">10</div><div class="nm">LOYVERSE</div><div class="ds">Gratis + add-on · bisnis kecil</div></div>
+  </div>
+
+  <h3 class="sect">Kekuatan Relatif (Frekuensi Rujukan 12 Sumber)</h3>
+  <div class="chart">
+    <div class="bars">
+      <div class="bar"><div class="lb">Moka</div><div class="tr" style="width:95%"><span class="vl">10/12</span></div></div>
+      <div class="bar"><div class="lb">Majoo</div><div class="tr" style="width:75%"><span class="vl">9/12</span></div></div>
+      <div class="bar"><div class="lb">Olsera</div><div class="tr" style="width:65%"><span class="vl">8/12</span></div></div>
+      <div class="bar"><div class="lb">Pawoon</div><div class="tr" style="width:58%"><span class="vl">7/12</span></div></div>
+      <div class="bar"><div class="lb">Qasir</div><div class="tr" style="width:50%"><span class="vl">6/12</span></div></div>
+    </div>
+    <div class="why">
+      <h2>MENGAPA MOKA NOMOR SATU</h2>
+      <li>Skala terbesar: 45.000+ merchant, 200+ area</li>
+      <li>Ekosistem GoTo: GoPay, GoFood, driver app</li>
+      <li>Terbanyak dirujuk sebagai pemimpin pasar</li>
+      <li>Enterprise-ready: klien Unilever retail</li>
+      <li>Kekurangan: harga tertinggi (~Rp249–299rb/outlet) &amp; butuh internet stabil</li>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="semicircle"></div>
+    <p><b>Sumber (12):</b> Locality Partners 2026 · KenResearch ID POS 2026–2031 · iBOS Top-10 · SoftwareSuggest · Synetica POS Guide Nov 2026 · kasir.mu Comparison · Inticore · Paper.id · Accurate.id · Jubelio · ExcelForAccounting · Teknologia Solutions.</p>
+    <div class="square"></div>
+  </div>
+</div>
+</body>
+</html>
