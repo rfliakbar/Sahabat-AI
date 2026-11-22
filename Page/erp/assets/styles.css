@@ -1,0 +1,74 @@
+/* AgriERP — Gaya kustom pelengkap Tailwind */
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: #f2fbf5; }
+::-webkit-scrollbar-thumb { background: #96deaf; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #38ab63; }
+
+.agri-pattern {
+  background-color: #f8faf9;
+  background-image: radial-gradient(#278b4d12 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(2); opacity: 0; }
+}
+.pulse-dot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background-color: #22c55e;
+  animation: pulse-ring 1.8s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+}
+
+.card { background: #fff; border: 1px solid rgb(226 232 240 / 0.9); border-radius: 1rem; box-shadow: 0 1px 2px rgb(15 23 42 / 0.04); }
+
+.kpi-spark { height: 34px; }
+
+.nav-link {
+  display: flex; align-items: center; gap: 0.65rem;
+  padding: 0.6rem 0.85rem; border-radius: 0.75rem;
+  font-size: 0.8125rem; font-weight: 600; color: #c4edd2;
+  transition: all .15s ease; border: 1px solid transparent;
+}
+.nav-link:hover { background: #1e5835; color: #fff; }
+.nav-link.active { background: #278b4d; color: #fff; border-color: #38ab63; box-shadow: 0 4px 14px -6px #38ab63; }
+
+.view { display: none; }
+.view.active { display: block; animation: fadeUp .22s ease; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.table-wrap { overflow-x: auto; }
+table.data { width: 100%; font-size: 0.8125rem; border-collapse: collapse; }
+table.data th {
+  text-align: left; font-size: 0.6875rem; text-transform: uppercase; letter-spacing: .04em;
+  color: #64748b; font-weight: 700; padding: 0.6rem 0.75rem; background: #f8faf9;
+  border-bottom: 1px solid #e2e8f0; white-space: nowrap;
+}
+table.data td { padding: 0.6rem 0.75rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+table.data tbody tr:hover { background: #f2fbf5; }
+
+.badge { display: inline-flex; align-items: center; gap: .25rem; font-size: .6875rem; font-weight: 700; padding: .15rem .5rem; border-radius: 9999px; white-space: nowrap; }
+
+.chip {
+  font-size: .75rem; font-weight: 700; padding: .35rem .7rem; border-radius: 9999px;
+  background: #f1f5f9; color: #475569; transition: all .15s ease; border: 1px solid transparent;
+}
+.chip:hover { background: #e2e8f0; }
+.chip.active { background: #278b4d; color: #fff; border-color: #216e3f; }
+
+.ai-prose { font-size: .875rem; line-height: 1.6; color: #334155; }
+.ai-prose h2, .ai-prose h3, .ai-prose h4 { color: #1a482d; }
+.ai-prose li { margin-top: .25rem; }
+
+.skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: .5rem; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+@media print {
+  aside, header, .no-print { display: none !important; }
+  body, .agri-pattern { background: #fff !important; }
+  .view { display: block !important; }
+  .card { box-shadow: none !important; border: 1px solid #e2e8f0 !important; }
+}

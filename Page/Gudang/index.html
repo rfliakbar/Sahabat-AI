@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriStock WMS — Manajemen Gudang & Sinkronisasi Kasir</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        agri: {
+                            50: '#f2fbf5',
+                            100: '#e1f7e8',
+                            200: '#c4edd2',
+                            300: '#96deaf',
+                            400: '#5fc684',
+                            500: '#38ab63',
+                            600: '#278b4d',
+                            700: '#216e3f',
+                            800: '#1e5835',
+                            900: '#1a482d',
+                            950: '#0d2718',
+                        },
+                        earth: {
+                            50: '#faf8f5',
+                            100: '#f3efe6',
+                            200: '#e6decb',
+                            800: '#5c4d3c',
+                            900: '#4a3e31',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f2fbf5;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #96deaf;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #38ab63;
+        }
+
+        /* Subtle organic pattern background */
+        .agri-pattern {
+            background-color: #f8faf9;
+            background-image: radial-gradient(#278b4d12 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.8; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        .pulse-dot::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 9999px;
+            background-color: #22c55e;
+            animation: pulse-ring 1.8s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+        }
+    </style>
+</head>
+<body class="agri-pattern text-slate-800 font-sans antialiased min-h-screen flex flex-col lg:flex-row">
+
+    <!-- MOBILE HEADER -->
+    <header class="lg:hidden bg-agri-900 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-md">
+        <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-agri-500 flex items-center justify-center shadow-inner">
+                <i data-lucide="sprout" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-base leading-tight">AgriStock <span class="text-agri-300 font-medium">WMS</span></h1>
+                <p class="text-[11px] text-agri-200 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span> POS Terhubung
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="openPosSimulatorModal()" class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs rounded-lg flex items-center gap-1 transition">
+                <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i> Simulasi POS
+            </button>
+            <button onclick="toggleMobileMenu()" class="p-2 rounded-lg bg-agri-800 hover:bg-agri-700">
+                <i data-lucide="menu" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-72 bg-agri-950 text-white transform -translate-x-full lg:translate-x-0 lg:static lg:flex-shrink-0 transition-transform duration-300 ease-in-out flex flex-col justify-between shadow-xl">
+        <div>
+            <!-- Brand Logo -->
+            <div class="p-6 border-b border-agri-800/70 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-agri-400 to-agri-600 flex items-center justify-center shadow-lg shadow-agri-900/50">
+                        <i data-lucide="sprout" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <span class="font-extrabold text-lg tracking-tight block leading-none">AgriStock</span>
+                        <span class="text-xs text-agri-300 font-medium">Warehouse & Shelf Sync</span>
+                    </div>
+                </div>
+                <button onclick="toggleMobileMenu()" class="lg:hidden text-agri-300 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- POS Sync Status Card -->
+            <div class="mx-4 mt-5 p-3.5 rounded-xl bg-agri-900/90 border border-agri-700/60">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-xs font-semibold text-agri-200 uppercase tracking-wider">Koneksi Kasir (POS)</span>
+                    <span class="relative flex h-2.5 w-2.5">
+                        <span class="pulse-dot relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
+                    </span>
+                </div>
+                <p class="text-xs text-agri-100/90 leading-relaxed">
+                    Sinkronisasi otomatis aktif via <code class="font-mono text-amber-300 bg-agri-950 px-1 py-0.5 rounded">BroadcastChannel</code> & API Hook.
+                </p>
+                <div class="mt-2.5 pt-2 border-t border-agri-800 flex items-center justify-between text-[11px] text-agri-300">
+                    <span>Sync Terakhir:</span>
+                    <span id="last-sync-time" class="font-mono text-white">Baru saja</span>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="mt-6 px-3 space-y-1.5">
+                <button onclick="switchTab('inventory')" id="nav-inventory" class="nav-btn w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-semibold bg-agri-600 text-white shadow-sm transition">
+                    <span class="flex items-center gap-3">
+                        <i data-lucide="warehouse" class="w-4 h-4"></i>
+                        Katalog & Stok Gudang
+                    </span>
+                    <span id="badge-total-items" class="text-xs bg-agri-800 text-agri-100 px-2 py-0.5 rounded-full font-mono">0</span>
+                </button>
+
+                <button onclick="switchTab('replenishment')" id="nav-replenishment" class="nav-btn w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-medium text-agri-200 hover:bg-agri-900 hover:text-white transition">
+                    <span class="flex items-center gap-3">
+                        <i data-lucide="bell-ring" class="w-4 h-4"></i>
+                        Notifikasi Isi Rak
+                    </span>
+                    <span id="badge-alert-count" class="text-xs bg-rose-500 text-white px-2 py-0.5 rounded-full font-mono hidden">0</span>
+                </button>
+
+                <button onclick="switchTab('integration')" id="nav-integration" class="nav-btn w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-medium text-agri-200 hover:bg-agri-900 hover:text-white transition">
+                    <span class="flex items-center gap-3">
+                        <i data-lucide="cable" class="w-4 h-4"></i>
+                        Jembatan API Kasir
+                    </span>
+                    <span class="text-[10px] uppercase tracking-wider bg-agri-800 text-agri-300 px-1.5 py-0.5 rounded">Docs</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Bottom Action: POS Simulator for Testing -->
+        <div class="p-4 border-t border-agri-800/70 space-y-3">
+            <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-400/30">
+                <div class="flex items-center gap-2 text-amber-300 text-xs font-semibold mb-1">
+                    <i data-lucide="flask-conical" class="w-4 h-4"></i>
+                    <span>Uji Alur Bagian B & C</span>
+                </div>
+                <p class="text-[11px] text-agri-200 mb-2.5">Simulasikan pembelian dari sistem kasir untuk melihat stok gudang & rak berkurang otomatis.</p>
+                <button onclick="openPosSimulatorModal()" class="w-full py-2 px-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg shadow transition flex items-center justify-center gap-1.5">
+                    <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i>
+                    Simulasi Transaksi Kasir
+                </button>
+            </div>
+
+            <div class="flex items-center gap-3 px-2 py-1">
+                <div class="w-8 h-8 rounded-full bg-agri-700 flex items-center justify-center font-bold text-xs text-agri-100">SG</div>
+                <div class="text-xs">
+                    <p class="font-semibold text-white">Staff Gudang Utama</p>
+                    <p class="text-agri-400">Gudang Hasil Tani & Saprotan</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+
+        <!-- TOP BANNER ALERT (If any shelf needs replenishment) -->
+        <div id="urgent-shelf-banner" class="hidden mb-6 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-start gap-3.5">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h3 class="font-bold text-amber-950 text-sm sm:text-base">Perhatian: Stok Display Rak Menipis!</h3>
+                        <span id="banner-alert-badge" class="px-2 py-0.5 text-xs font-bold bg-amber-500 text-white rounded-full">0 Item</span>
+                    </div>
+                    <p id="banner-alert-desc" class="text-xs sm:text-sm text-amber-800 mt-0.5">
+                        Beberapa produk di rak pajangan toko berada di bawah batas minimal. Segera lakukan pengisian ulang dari gudang.
+                    </p>
+                </div>
+            </div>
+            <button onclick="switchTab('replenishment')" class="w-full sm:w-auto px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition whitespace-nowrap flex items-center justify-center gap-1.5">
+                <span>Lihat & Isi Ulang Rak</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <!-- =====================================================================
+             TAB 1: KATALOG & STOK GUDANG (BAGIAN A)
+        ====================================================================== -->
+        <section id="tab-inventory" class="space-y-6">
+            <!-- Header & Primary CTA -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-agri-100 text-agri-800 text-xs font-semibold mb-2">
+                        <i data-lucide="leaf" class="w-3.5 h-3.5 text-agri-600"></i> Modul Inventory & Master Produk
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Manajemen Gudang & Kapasitas Rak</h2>
+                    <p class="text-sm text-slate-600 mt-1">Tambah jenis barang baru, atur kapasitas rak pajangan, dan perbarui stok gudang secara real-time ke sistem kasir.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <button onclick="openProductModal()" class="w-full sm:w-auto px-5 py-3 bg-agri-600 hover:bg-agri-700 active:bg-agri-800 text-white font-semibold text-sm rounded-xl shadow-md shadow-agri-600/20 transition flex items-center justify-center gap-2">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>Tambah Jenis Barang Baru</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- KPI Metrics Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Jenis Produk</span>
+                        <div class="w-9 h-9 rounded-xl bg-agri-50 text-agri-600 flex items-center justify-center">
+                            <i data-lucide="boxes" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                    <p id="stat-total-sku" class="text-2xl font-extrabold text-slate-900 mt-3 font-mono">0</p>
+                    <p class="text-xs text-agri-600 font-medium mt-1 flex items-center gap-1">
+                        <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Tampil di Katalog Kasir
+                    </p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Stok Gudang</span>
+                        <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                            <i data-lucide="warehouse" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                    <p id="stat-warehouse-stock" class="text-2xl font-extrabold text-slate-900 mt-3 font-mono">0 <span class="text-xs font-sans font-normal text-slate-500">unit</span></p>
+                    <p class="text-xs text-slate-500 mt-1">Cadangan penyimpanan utama</p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Stok Display Rak</span>
+                        <div class="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
+                            <i data-lucide="layout-grid" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                    <p id="stat-shelf-stock" class="text-2xl font-extrabold text-slate-900 mt-3 font-mono">0 <span class="text-xs font-sans font-normal text-slate-500">unit</span></p>
+                    <p class="text-xs text-slate-500 mt-1">Tersedia di rak pajangan toko</p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Perlu Isi Ulang Rak</span>
+                        <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                            <i data-lucide="bell-ring" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                    <p id="stat-low-shelf" class="text-2xl font-extrabold text-amber-600 mt-3 font-mono">0 <span class="text-xs font-sans font-normal text-slate-500">rak</span></p>
+                    <p class="text-xs text-slate-500 mt-1">Display &le; batas minimal rak</p>
+                </div>
+            </div>
+
+            <!-- Search & Filter Bar -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                <div class="relative flex-1">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" id="search-input" oninput="renderInventory()" placeholder="Cari nama barang pertanian atau kode khusus / SKU..." class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-agri-500 focus:bg-white transition">
+                </div>
+                <div class="flex items-center gap-2">
+                    <select id="filter-status" onchange="renderInventory()" class="w-full sm:w-auto px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-agri-500 text-slate-700 font-medium">
+                        <option value="all">Semua Status Stok</option>
+                        <option value="low-shelf">Rak Perlu Diisi Ulang</option>
+                        <option value="low-warehouse">Stok Gudang Menipis (&le;10)</option>
+                        <option value="healthy">Stok Aman</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Product Grid / Cards -->
+            <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                <!-- Populated dynamically via JS -->
+            </div>
+        </section>
+
+        <!-- =====================================================================
+             TAB 2: NOTIFIKASI PENGISIAN RAK & LOG TRANSAKSI (BAGIAN B)
+        ====================================================================== -->
+        <section id="tab-replenishment" class="hidden space-y-6">
+            <div>
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold mb-2">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Bagian B — Replenishment Rak & Monitoring
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Notifikasi Pengisian Rak Pajangan</h2>
+                <p class="text-sm text-slate-600 mt-1">Daftar barang yang stok display raknya mencapai atau di bawah batas minimal setelah transaksi di kasir.</p>
+            </div>
+
+            <!-- Active Shelf Alerts Container -->
+            <div id="replenishment-list" class="space-y-4">
+                <!-- Populated dynamically -->
+            </div>
+
+            <!-- Activity & Sync Log -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="history" class="w-4 h-4 text-agri-600"></i>
+                        <h3 class="font-bold text-slate-800 text-sm">Log Aktivitas Gudang & Sinkronisasi Kasir</h3>
+                    </div>
+                    <button onclick="clearLogs()" class="text-xs text-slate-500 hover:text-slate-800 font-medium">Bersihkan Log</button>
+                </div>
+                <div id="activity-log-list" class="divide-y divide-slate-100 max-h-80 overflow-y-auto">
+                    <!-- Logs populated here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- =====================================================================
+             TAB 3: DOKUMENTASI INTEGRASI KE SISTEM KASIR (POS)
+        ====================================================================== -->
+        <section id="tab-integration" class="hidden space-y-6">
+            <div>
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-agri-100 text-agri-800 text-xs font-semibold mb-2">
+                    <i data-lucide="cable" class="w-3.5 h-3.5"></i> Integrasi Real-Time POS
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Koneksi Sistem Gudang & Kasir (POS)</h2>
+                <p class="text-sm text-slate-600 mt-1">Kode ini sudah dilengkapi protokol komunikasi dua arah agar aplikasi Kasir (POS) langsung menerima produk baru dan mengirim pengurangan stok.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Card 1: Struktur Payload Data -->
+                <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-agri-100 text-agri-700 flex items-center justify-center">
+                            <i data-lucide="database" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-900">1. Data Produk Terpusat (Master Schema)</h3>
+                            <p class="text-xs text-slate-500">Format JSON yang otomatis dikirim ke Katalog Visual Kasir</p>
+                        </div>
+                    </div>
+                    <pre class="bg-slate-900 text-emerald-300 p-4 rounded-xl text-xs font-mono overflow-x-auto leading-relaxed">{
+  "id": "PRD-1732271001",
+  "sku": "BNH-PADI-01",
+  "name": "Benih Padi Unggul Inpari 32 (5kg)",
+  "price": 75000,
+  "image": "data:image/jpeg;base64,...",
+  "warehouseStock": 120,
+  "shelfMax": 20,
+  "shelfMin": 5,
+  "shelfCurrent": 18,
+  "updatedAt": "2026-11-22T18:42:00Z"
+}</pre>
+                </div>
+
+                <!-- Card 2: Cara Kasir Terhubung -->
+                <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                            <i data-lucide="zap" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-900">2. Event Sinkronisasi Kasir &rarr; Gudang</h3>
+                            <p class="text-xs text-slate-500">Cara sistem kasir mengurangi stok gudang & display rak</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Aplikasi ini membuka saluran <code class="bg-slate-100 px-1.5 py-0.5 rounded font-mono text-agri-700">BroadcastChannel('agristock_pos_sync')</code> serta menyediakan fungsi global <code class="bg-slate-100 px-1.5 py-0.5 rounded font-mono text-agri-700">window.AgriStockBridge.recordPosSale(sku, qty)</code>.
+                    </p>
+                    <pre class="bg-slate-900 text-amber-200 p-4 rounded-xl text-xs font-mono overflow-x-auto leading-relaxed">// Contoh kode di Aplikasi Kasir saat pembayaran sukses:
+const posChannel = new BroadcastChannel('agristock_pos_sync');
+posChannel.postMessage({
+  type: 'POS_SALE_COMPLETED',
+  items: [
+    { sku: 'BNH-PADI-01', qty: 3 }
+  ]
+});</pre>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- =========================================================================
+         MODAL 1: TAMBAH JENIS BARANG BARU (DENGAN AKSES KAMERA & GALERI)
+    ========================================================================== -->
+    <div id="product-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden my-auto animate-fade-in">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 bg-agri-900 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-agri-600 flex items-center justify-center">
+                        <i data-lucide="package-plus" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base">Tambah Jenis Barang Baru</h3>
+                        <p class="text-xs text-agri-300">Otomatis tersinkronisasi ke Katalog Visual Kasir</p>
+                    </div>
+                </div>
+                <button onclick="closeProductModal()" class="p-1.5 rounded-lg hover:bg-agri-800 text-agri-200 hover:text-white transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form -->
+            <form id="new-product-form" onsubmit="handleSaveNewProduct(event)" class="p-6 space-y-5 max-h-[82vh] overflow-y-auto">
+                
+                <!-- FOTO BARANG (KAMERA / PENYIMPANAN) -->
+                <div class="bg-agri-50/70 border border-agri-200 rounded-2xl p-4">
+                    <label class="block text-xs font-bold text-agri-900 uppercase tracking-wider mb-2">
+                        Foto Barang (Untuk Katalog Visual Kasir) *
+                    </label>
+                    
+                    <div class="flex flex-col sm:flex-row items-center gap-4">
+                        <!-- Image Preview Box -->
+                        <div class="w-32 h-32 rounded-xl bg-white border-2 border-dashed border-agri-300 flex items-center justify-center overflow-hidden relative flex-shrink-0 shadow-inner">
+                            <img id="photo-preview" src="" alt="Preview Barang" class="w-full h-full object-cover hidden">
+                            <div id="photo-placeholder" class="text-center p-2">
+                                <i data-lucide="image-plus" class="w-7 h-7 text-agri-400 mx-auto mb-1"></i>
+                                <span class="text-[11px] text-slate-400 block leading-tight">Belum ada foto</span>
+                            </div>
+                        </div>
+
+                        <!-- Camera & File Upload Controls -->
+                        <div class="flex-1 space-y-2.5 w-full">
+                            <p class="text-xs text-slate-600">Ambil foto langsung menggunakan kamera perangkat atau pilih gambar dari penyimpanan/galeri.</p>
+                            
+                            <div class="flex flex-wrap gap-2">
+                                <!-- Button Buka Kamera WebRTC -->
+                                <button type="button" onclick="startLiveCamera()" class="flex-1 sm:flex-none px-3.5 py-2 bg-agri-600 hover:bg-agri-700 text-white text-xs font-semibold rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
+                                    <i data-lucide="camera" class="w-4 h-4"></i>
+                                    <span>Ambil Foto Kamera</span>
+                                </button>
+
+                                <!-- Button Pilih dari Penyimpanan -->
+                                <label class="flex-1 sm:flex-none px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold rounded-xl shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer">
+                                    <i data-lucide="folder-open" class="w-4 h-4 text-agri-600"></i>
+                                    <span>Pilih dari Penyimpanan</span>
+                                    <input type="file" id="file-input" accept="image/*" onchange="handleFileUpload(event)" class="hidden">
+                                </label>
+                            </div>
+                            <p id="camera-error-msg" class="text-xs text-rose-600 hidden"></p>
+                        </div>
+                    </div>
+
+                    <!-- Live Camera Viewfinder (Hidden by default) -->
+                    <div id="camera-container" class="hidden mt-4 bg-slate-950 rounded-xl overflow-hidden relative">
+                        <video id="camera-stream" autoplay playsinline class="w-full max-h-64 object-cover"></video>
+                        <canvas id="camera-canvas" class="hidden"></canvas>
+                        <div class="p-3 bg-slate-900 flex items-center justify-between">
+                            <button type="button" onclick="stopLiveCamera()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-medium rounded-lg">
+                                Batal
+                            </button>
+                            <button type="button" onclick="capturePhoto()" class="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold rounded-lg flex items-center gap-1.5">
+                                <i data-lucide="aperture" class="w-4 h-4"></i> Jepret Foto
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INFORMASI DASAR BARANG -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Nama Barang *</label>
+                        <input type="text" id="input-name" required placeholder="Contoh: Pupuk Urea Bersubsidi 50kg / Benih Jagung Hibrida" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-agri-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Kode Khusus / SKU / Barcode *</label>
+                        <div class="flex gap-1.5">
+                            <input type="text" id="input-sku" required placeholder="PPK-UREA-50" class="w-full px-3.5 py-2.5 text-sm font-mono uppercase border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-agri-500">
+                            <button type="button" onclick="generateSku()" title="Buat Kode Otomatis" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold border border-slate-300">
+                                Auto
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Harga Jual (Rp) *</label>
+                        <input type="number" id="input-price" required min="100" step="50" placeholder="125000" class="w-full px-3.5 py-2.5 text-sm font-mono border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-agri-500">
+                    </div>
+                </div>
+
+                <!-- STOK GUDANG & KAPASITAS RAK PAJANGAN (BAGIAN A & B) -->
+                <div class="bg-earth-50 border border-earth-200 rounded-2xl p-4 space-y-3">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="layout-grid" class="w-4 h-4 text-agri-700"></i>
+                        <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Pengaturan Stok Gudang & Kapasitas Rak Toko</h4>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Stok Gudang Saat Ini (Unit) *</label>
+                            <input type="number" id="input-warehouse-stock" required min="0" value="50" class="w-full px-3 py-2 text-sm font-mono bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-agri-500">
+                            <span class="text-[11px] text-slate-500">Stok simpanan di dalam gudang</span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Stok Display Rak Awal (Unit) *</label>
+                            <input type="number" id="input-shelf-current" required min="0" value="15" class="w-full px-3 py-2 text-sm font-mono bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-agri-500">
+                            <span class="text-[11px] text-slate-500">Jumlah barang yang langsung dipajang</span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Kapasitas Maksimal Rak (Unit) *</label>
+                            <input type="number" id="input-shelf-max" required min="1" value="20" class="w-full px-3 py-2 text-sm font-mono bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-agri-500">
+                            <span class="text-[11px] text-slate-500">Daya tampung penuh rak pajangan</span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Batas Minimal Rak (Trigger Notif) *</label>
+                            <input type="number" id="input-shelf-min" required min="1" value="5" class="w-full px-3 py-2 text-sm font-mono bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-agri-500">
+                            <span class="text-[11px] text-slate-500">Notifikasi muncul jika display &le; angka ini</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="pt-2 flex items-center justify-end gap-3 border-t border-slate-100">
+                    <button type="button" onclick="closeProductModal()" class="px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 bg-agri-600 hover:bg-agri-700 text-white text-sm font-bold rounded-xl shadow-md transition flex items-center gap-2">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>Simpan & Sinkronkan ke Kasir</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL 2: PERBARUI STOK GUDANG / ISI ULANG RAK (BAGIAN A & B)
+    ========================================================================== -->
+    <div id="update-stock-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="px-5 py-4 bg-agri-900 text-white flex items-center justify-between">
+                <div>
+                    <h3 id="update-modal-title" class="font-bold text-base">Perbarui Stok & Rak</h3>
+                    <p id="update-modal-subtitle" class="text-xs text-agri-300 font-mono">SKU</p>
+                </div>
+                <button onclick="closeUpdateModal()" class="p-1.5 rounded-lg hover:bg-agri-800 text-agri-200">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleUpdateStockSubmit(event)" class="p-5 space-y-4">
+                <input type="hidden" id="update-product-id">
+
+                <!-- Current Summary -->
+                <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
+                    <div>
+                        <span class="text-[11px] text-slate-500 block">Stok Gudang</span>
+                        <span id="update-current-wh" class="text-lg font-extrabold font-mono text-slate-900">0</span>
+                    </div>
+                    <div class="border-l border-slate-200">
+                        <span class="text-[11px] text-slate-500 block">Display Rak / Maks</span>
+                        <span id="update-current-shelf" class="text-lg font-extrabold font-mono text-agri-700">0 / 0</span>
+                    </div>
+                </div>
+
+                <!-- Action Type Selector -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Jenis Pembaruan</label>
+                    <select id="update-action-type" onchange="toggleUpdateActionFields()" class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-agri-500 font-medium">
+                        <option value="restock-warehouse">+ Tambah Stok Masuk Gudang (Inbound / QC)</option>
+                        <option value="refill-shelf">&rarr; Isi Ulang Rak Pajangan (Pindah dari Gudang)</option>
+                        <option value="adjust-warehouse">= Koreksi Manual Stok Gudang (Stock Opname)</option>
+                    </select>
+                </div>
+
+                <!-- Quantity Input -->
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label id="update-qty-label" class="block text-xs font-bold text-slate-700">Jumlah Penambahan (Unit)</label>
+                        <button type="button" id="btn-fill-recommended" onclick="fillRecommendedShelfQty()" class="hidden text-xs font-semibold text-agri-600 hover:text-agri-800 underline">
+                            Isi Penuh Rekomendasi
+                        </button>
+                    </div>
+                    <input type="number" id="update-qty-input" required min="1" value="10" class="w-full px-3.5 py-2.5 text-base font-mono font-bold border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-agri-500">
+                    <p id="update-helper-text" class="text-xs text-slate-500 mt-1.5">Stok baru akan langsung tersinkronisasi ke kasir.</p>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
+                    <button type="button" onclick="closeUpdateModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-agri-600 hover:bg-agri-700 text-white text-sm font-bold rounded-xl shadow">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL 3: SIMULATOR TRANSAKSI KASIR (POS) UNTUK UJI ALUR REAL-TIME
+    ========================================================================== -->
+    <div id="pos-simulator-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="px-5 py-4 bg-amber-500 text-slate-950 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                    <div>
+                        <h3 class="font-extrabold text-sm">Simulator Transaksi Kasir (POS)</h3>
+                        <p class="text-[11px] font-medium opacity-85">Uji pengurangan stok gudang & display rak</p>
+                    </div>
+                </div>
+                <button onclick="closePosSimulatorModal()" class="p-1 rounded-lg hover:bg-amber-600/20">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleSimulatePosSale(event)" class="p-5 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Produk yang Dibeli Pelanggan</label>
+                    <select id="pos-sim-product" class="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"></select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Jumlah Terjual (Unit)</label>
+                    <input type="number" id="pos-sim-qty" min="1" value="3" required class="w-full px-3.5 py-2.5 text-base font-mono font-bold border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-1">
+                    <p class="font-semibold text-slate-800">Efek Otomatis (Sesuai Bagian B Flowchart):</p>
+                    <p>&bull; Stok Gudang berkurang sesuai jumlah terjual.</p>
+                    <p>&bull; Stok Display Rak berkurang sesuai jumlah terjual.</p>
+                    <p>&bull; Jika Display Rak &le; Batas Minimal, notifikasi pengisian rak muncul.</p>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closePosSimulatorModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Tutup</button>
+                    <button type="submit" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 text-sm font-extrabold rounded-xl shadow flex items-center gap-1.5">
+                        <i data-lucide="check-circle" class="w-4 h-4"></i> Proses Pembayaran Kasir
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- =========================================================================
+         JAVASCRIPT LOGIC & POS INTEGRATION BRIDGE
+    ========================================================================== -->
+    <script>
+        /**
+         * 1. INITIAL MOCK DATA (PRODUK PERTANIAN)
+         * Menyimpan data master produk, harga, foto, stok gudang, serta kapasitas & display rak.
+         */
+        let products = [
+            {
+                id: 'PRD-1001',
+                sku: 'BNH-PADI-32',
+                name: 'Benih Padi Unggul Inpari 32 (5kg)',
+                price: 75000,
+                image: 'https://placehold.co/400x300/278b4d/ffffff?text=Benih+Padi+Inpari+32',
+                warehouseStock: 85,
+                shelfMax: 20,
+                shelfMin: 5,
+                shelfCurrent: 14,
+                updatedAt: new Date().toISOString()
+            },
+            {
+                id: 'PRD-1002',
+                sku: 'PPK-NPK-16',
+                name: 'Pupuk NPK Mutiara 16-16-16 (1kg)',
+                price: 22000,
+                image: 'https://placehold.co/400x300/38ab63/ffffff?text=Pupuk+NPK+Mutiara',
+                warehouseStock: 140,
+                shelfMax: 25,
+                shelfMin: 6,
+                shelfCurrent: 5, // Sudah menyentuh batas minimal untuk demonstrasi alert
+                updatedAt: new Date().toISOString()
+            },
+            {
+                id: 'PRD-1003',
+                sku: 'PST-ORG-500',
+                name: 'Pestisida Nabati Neem Oil 500ml',
+                price: 48000,
+                image: 'https://placehold.co/400x300/1e5835/ffffff?text=Pestisida+Nabati',
+                warehouseStock: 42,
+                shelfMax: 15,
+                shelfMin: 4,
+                shelfCurrent: 11,
+                updatedAt: new Date().toISOString()
+            },
+            {
+                id: 'PRD-1004',
+                sku: 'ALT-SPRY-16L',
+                name: 'Tangki Sprayer Elektrik Pertanian 16L',
+                price: 465000,
+                image: 'https://placehold.co/400x300/216e3f/ffffff?text=Sprayer+Elektrik+16L',
+                warehouseStock: 12,
+                shelfMax: 6,
+                shelfMin: 2,
+                shelfCurrent: 2, // Sudah menyentuh batas minimal
+                updatedAt: new Date().toISOString()
+            }
+        ];
+
+        let activityLogs = [
+            {
+                time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+                type: 'sync',
+                message: 'Sistem Gudang AgriStock terhubung dengan Katalog Kasir (POS).'
+            }
+        ];
+
+        let capturedPhotoDataUrl = '';
+        let activeMediaStream = null;
+
+        /**
+         * 2. JEMBATAN KONEKSI REAL-TIME KE SISTEM KASIR (POS BRIDGE)
+         * Menggunakan BroadcastChannel API (untuk komunikasi antar tab/window browser secara real-time)
+         * dan CustomEvent / Global Object agar mudah diintegrasikan dengan modul POS.
+         */
+        const posSyncChannel = new BroadcastChannel('agristock_pos_sync');
+
+        // Kirim pembaruan katalog & stok ke sistem kasir setiap kali ada perubahan di gudang
+        function broadcastCatalogToPOS(reason = 'CATALOG_UPDATED') {
+            const payload = {
+                type: reason,
+                timestamp: new Date().toISOString(),
+                products: products.map(p => ({
+                    id: p.id,
+                    sku: p.sku,
+                    name: p.name,
+                    price: p.price,
+                    image: p.image,
+                    availableStock: p.warehouseStock,
+                    shelfStock: p.shelfCurrent
+                }))
+            };
+
+            posSyncChannel.postMessage(payload);
+            window.dispatchEvent(new CustomEvent('agristock:catalog-updated', { detail: payload }));
+
+            // Cermin snapshot untuk modul ERP (AgriERP) agar stok tetap terbaru
+            try {
+                localStorage.setItem('agripos_catalog_snapshot', JSON.stringify({
+                    ts: new Date().toISOString(),
+                    products: payload.products
+                }));
+            } catch (e) {
+                console.warn('Snapshot ERP gagal disimpan:', e);
+            }
+
+            document.getElementById('last-sync-time').textContent = new Date().toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        // Dengarkan transaksi yang masuk dari Sistem Kasir (Bagian B & C)
+        posSyncChannel.onmessage = (event) => {
+            const data = event.data;
+            if (!data) return;
+
+            if (data.type === 'POS_SALE_COMPLETED' && Array.isArray(data.items)) {
+                data.items.forEach(item => {
+                    processPosSaleDeduction(item.sku, Number(item.qty));
+                });
+            } else if (data.type === 'POS_REQUEST_CATALOG') {
+                broadcastCatalogToPOS('CATALOG_SYNC_RESPONSE');
+            }
+        };
+
+        // API Global yang dapat dipanggil langsung oleh kode Kasir jika berada dalam satu halaman/frame
+        window.AgriStockBridge = {
+            getProducts: () => [...products],
+            recordPosSale: (sku, qty) => processPosSaleDeduction(sku, qty),
+            syncNow: () => broadcastCatalogToPOS('MANUAL_SYNC')
+        };
+
+        /**
+         * 3. LOGIKA PENGURANGAN STOK DARI KASIR & CEK BATAS RAK (BAGIAN B)
+         */
+        function processPosSaleDeduction(sku, soldQty) {
+            const product = products.find(p => p.sku.toLowerCase() === sku.toLowerCase());
+            if (!product) {
+                showToast(`Kode barang ${sku} dari kasir tidak ditemukan di gudang.`, 'error');
+                return;
+            }
+
+            if (soldQty <= 0) return;
+
+            // 1. Kurangi Stok Gudang (real-time)
+            const prevWarehouse = product.warehouseStock;
+            product.warehouseStock = Math.max(0, product.warehouseStock - soldQty);
+
+            // 2. Kurangi Stok Display Rak (real-time)
+            const prevShelf = product.shelfCurrent;
+            product.shelfCurrent = Math.max(0, product.shelfCurrent - soldQty);
+            product.updatedAt = new Date().toISOString();
+
+            addLog('pos', `Kasir menjual ${soldQty}x "${product.name}". Gudang: ${prevWarehouse}→${product.warehouseStock}, Rak: ${prevShelf}→${product.shelfCurrent}.`);
+
+            // 3. Cek Kondisi Display Rak: Apakah Stok Display Rak <= Batas Minimal Rak?
+            if (product.shelfCurrent <= product.shelfMin) {
+                const recommendedRefill = Math.min(
+                    product.shelfMax - product.shelfCurrent,
+                    product.warehouseStock
+                );
+
+                addLog('alert', `NOTIFIKASI RAK: Display "${product.name}" sisa ${product.shelfCurrent} unit (Batas min: ${product.shelfMin}). Rekomendasi ambil dari gudang: ${recommendedRefill} unit.`);
+                showToast(`Rak Menipis: ${product.name} (Sisa ${product.shelfCurrent} di rak). Segera isi ulang!`, 'warning');
+            } else {
+                showToast(`Transaksi kasir sinkron: -${soldQty} ${product.name}`, 'success');
+            }
+
+            // Sinkronkan balik stok terbaru ke POS dan perbarui UI
+            broadcastCatalogToPOS('STOCK_DEDUCTED_BY_POS');
+            refreshAllViews();
+        }
+
+        /**
+         * 4. KAMERA & PENYIMPANAN GAMBAR (BAGIAN A)
+         */
+        async function startLiveCamera() {
+            const errorEl = document.getElementById('camera-error-msg');
+            const container = document.getElementById('camera-container');
+            const video = document.getElementById('camera-stream');
+
+            errorEl.classList.add('hidden');
+
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('Browser tidak mendukung akses kamera langsung.');
+                }
+
+                // Meminta akses kamera belakang (environment) jika di HP, atau webcam di laptop
+                activeMediaStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { ideal: 'environment' }, width: { ideal: 800 }, height: { ideal: 600 } },
+                    audio: false
+                });
+
+                video.srcObject = activeMediaStream;
+                container.classList.remove('hidden');
+            } catch (err) {
+                errorEl.textContent = 'Kamera tidak dapat diakses (' + err.message + '). Silakan gunakan tombol "Pilih dari Penyimpanan".';
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        function stopLiveCamera() {
+            if (activeMediaStream) {
+                activeMediaStream.getTracks().forEach(track => track.stop());
+                activeMediaStream = null;
+            }
+            document.getElementById('camera-container').classList.add('hidden');
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('camera-stream');
+            const canvas = document.getElementById('camera-canvas');
+
+            if (!video.videoWidth) return;
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Kompresi ringan agar ringan saat disinkronkan ke kasir
+            capturedPhotoDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            setPhotoPreview(capturedPhotoDataUrl);
+            stopLiveCamera();
+            showToast('Foto barang berhasil diambil dari kamera!', 'success');
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Resize gambar via canvas agar ukuran payload tetap optimal
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const maxDim = 600;
+                    let w = img.width;
+                    let h = img.height;
+
+                    if (w > maxDim || h > maxDim) {
+                        if (w > h) {
+                            h = Math.round((h * maxDim) / w);
+                            w = maxDim;
+                        } else {
+                            w = Math.round((w * maxDim) / h);
+                            h = maxDim;
+                        }
+                    }
+
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+
+                    capturedPhotoDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+                    setPhotoPreview(capturedPhotoDataUrl);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function setPhotoPreview(dataUrl) {
+            const previewImg = document.getElementById('photo-preview');
+            const placeholder = document.getElementById('photo-placeholder');
+
+            if (dataUrl) {
+                previewImg.src = dataUrl;
+                previewImg.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            } else {
+                previewImg.src = '';
+                previewImg.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+            }
+        }
+
+        /**
+         * 5. TAMBAH BARANG BARU & PERBARUI STOK (BAGIAN A & B)
+         */
+        function generateSku() {
+            const nameVal = document.getElementById('input-name').value.trim();
+            const prefix = nameVal
+                ? nameVal.replace(/[^a-zA-Z0-9]/g, '').substring(0, 4).toUpperCase()
+                : 'AGRI';
+            const randomNum = Math.floor(100 + Math.random() * 900);
+            document.getElementById('input-sku').value = `${prefix}-${randomNum}`;
+        }
+
+        function handleSaveNewProduct(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('input-name').value.trim();
+            const sku = document.getElementById('input-sku').value.trim().toUpperCase();
+            const price = Number(document.getElementById('input-price').value);
+            const warehouseStock = Number(document.getElementById('input-warehouse-stock').value);
+            const shelfMax = Number(document.getElementById('input-shelf-max').value);
+            const shelfMin = Number(document.getElementById('input-shelf-min').value);
+            const shelfCurrent = Number(document.getElementById('input-shelf-current').value);
+
+            // Validasi duplikasi SKU
+            if (products.some(p => p.sku.toUpperCase() === sku)) {
+                showToast(`Kode khusus "${sku}" sudah digunakan barang lain!`, 'error');
+                return;
+            }
+
+            // Validasi logika rak
+            if (shelfMin >= shelfMax) {
+                showToast('Batas minimal rak harus lebih kecil dari kapasitas maksimal rak.', 'error');
+                return;
+            }
+            if (shelfCurrent > shelfMax) {
+                showToast('Stok display awal tidak boleh melebihi kapasitas maksimal rak.', 'error');
+                return;
+            }
+            if (shelfCurrent > warehouseStock) {
+                showToast('Stok display awal tidak boleh melebihi stok gudang saat ini.', 'error');
+                return;
+            }
+
+            const finalImage = capturedPhotoDataUrl || `https://placehold.co/400x300/278b4d/ffffff?text=${encodeURIComponent(name.substring(0, 18))}`;
+
+            const newProduct = {
+                id: 'PRD-' + Date.now(),
+                sku,
+                name,
+                price,
+                image: finalImage,
+                warehouseStock,
+                shelfMax,
+                shelfMin,
+                shelfCurrent,
+                updatedAt: new Date().toISOString()
+            };
+
+            products.unshift(newProduct);
+            addLog('add', `Barang baru "${name}" (${sku}) ditambahkan & otomatis tampil di Katalog Kasir.`);
+            
+            broadcastCatalogToPOS('NEW_PRODUCT_ADDED');
+            refreshAllViews();
+            closeProductModal();
+            showToast(`"${name}" berhasil disimpan & tampil di sistem kasir!`, 'success');
+        }
+
+        // Modal Update Stok / Isi Ulang Rak
+        let currentEditingProduct = null;
+
+        function openUpdateModal(productId, defaultAction = 'restock-warehouse') {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            currentEditingProduct = product;
+            document.getElementById('update-product-id').value = product.id;
+            document.getElementById('update-modal-title').textContent = product.name;
+            document.getElementById('update-modal-subtitle').textContent = `Kode: ${product.sku}`;
+            document.getElementById('update-current-wh').textContent = `${product.warehouseStock} unit`;
+            document.getElementById('update-current-shelf').textContent = `${product.shelfCurrent} / ${product.shelfMax}`;
+
+            const actionSelect = document.getElementById('update-action-type');
+            actionSelect.value = defaultAction;
+            toggleUpdateActionFields();
+
+            document.getElementById('update-stock-modal').classList.remove('hidden');
+        }
+
+        function closeUpdateModal() {
+            document.getElementById('update-stock-modal').classList.add('hidden');
+            currentEditingProduct = null;
+        }
+
+        function toggleUpdateActionFields() {
+            if (!currentEditingProduct) return;
+            const action = document.getElementById('update-action-type').value;
+            const label = document.getElementById('update-qty-label');
+            const input = document.getElementById('update-qty-input');
+            const helper = document.getElementById('update-helper-text');
+            const btnFill = document.getElementById('btn-fill-recommended');
+
+            if (action === 'restock-warehouse') {
+                label.textContent = 'Jumlah Barang Masuk Gudang (Unit)';
+                input.value = 20;
+                helper.textContent = 'Menambah stok penyimpanan utama di gudang (hasil Inbound/QC).';
+                btnFill.classList.add('hidden');
+            } else if (action === 'refill-shelf') {
+                const needed = Math.max(0, currentEditingProduct.shelfMax - currentEditingProduct.shelfCurrent);
+                const maxCanMove = Math.min(needed, currentEditingProduct.warehouseStock);
+                label.textContent = 'Jumlah Dipajang ke Rak (Unit)';
+                input.value = maxCanMove > 0 ? maxCanMove : 1;
+                helper.textContent = `Maksimal yang muat di rak: ${needed} unit. Stok gudang tersedia: ${currentEditingProduct.warehouseStock} unit.`;
+                btnFill.classList.remove('hidden');
+            } else {
+                label.textContent = 'Total Stok Gudang Sebenarnya (Unit)';
+                input.value = currentEditingProduct.warehouseStock;
+                helper.textContent = 'Menyesuaikan angka stok gudang sesuai hasil perhitungan fisik.';
+                btnFill.classList.add('hidden');
+            }
+        }
+
+        function fillRecommendedShelfQty() {
+            if (!currentEditingProduct) return;
+            const needed = Math.max(0, currentEditingProduct.shelfMax - currentEditingProduct.shelfCurrent);
+            const maxCanMove = Math.min(needed, currentEditingProduct.warehouseStock);
+            document.getElementById('update-qty-input').value = maxCanMove;
+        }
+
+        function handleUpdateStockSubmit(event) {
+            event.preventDefault();
+            if (!currentEditingProduct) return;
+
+            const action = document.getElementById('update-action-type').value;
+            const qty = Number(document.getElementById('update-qty-input').value);
+
+            if (action === 'restock-warehouse') {
+                currentEditingProduct.warehouseStock += qty;
+                addLog('update', `Restock gudang "${currentEditingProduct.name}" +${qty} unit (Total Gudang: ${currentEditingProduct.warehouseStock}).`);
+                showToast(`Stok gudang bertambah +${qty} unit.`, 'success');
+            } else if (action === 'refill-shelf') {
+                const spaceLeft = currentEditingProduct.shelfMax - currentEditingProduct.shelfCurrent;
+                if (qty > spaceLeft) {
+                    showToast(`Kapasitas rak tidak cukup! Sisa ruang rak hanya ${spaceLeft} unit.`, 'error');
+                    return;
+                }
+                if (qty > currentEditingProduct.warehouseStock) {
+                    showToast(`Stok gudang tidak mencukupi (Tersedia: ${currentEditingProduct.warehouseStock} unit).`, 'error');
+                    return;
+                }
+
+                // Sesuai Bagian B: Ambil dari gudang & pajang ke rak -> Stok gudang berkurang, display rak bertambah
+                currentEditingProduct.warehouseStock -= qty;
+                currentEditingProduct.shelfCurrent += qty;
+
+                addLog('refill', `Isi ulang rak "${currentEditingProduct.name}" sebanyak ${qty} unit (Display rak: ${currentEditingProduct.shelfCurrent}/${currentEditingProduct.shelfMax}, Sisa gudang: ${currentEditingProduct.warehouseStock}).`);
+                showToast(`Rak berhasil diisi ulang (+${qty} unit)!`, 'success');
+            } else if (action === 'adjust-warehouse') {
+                currentEditingProduct.warehouseStock = qty;
+                addLog('update', `Koreksi stok gudang "${currentEditingProduct.name}" menjadi ${qty} unit.`);
+                showToast(`Stok gudang diperbarui menjadi ${qty} unit.`, 'success');
+            }
+
+            currentEditingProduct.updatedAt = new Date().toISOString();
+            broadcastCatalogToPOS('STOCK_UPDATED');
+            refreshAllViews();
+            closeUpdateModal();
+        }
+
+        /**
+         * 6. RENDERING UI (KATALOG, NOTIFIKASI RAK & LOG)
+         */
+        function formatRupiah(num) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(num);
+        }
+
+        function refreshAllViews() {
+            updateMetricsAndAlerts();
+            renderInventory();
+            renderReplenishmentTab();
+            renderLogs();
+        }
+
+        function updateMetricsAndAlerts() {
+            const totalSku = products.length;
+            const totalWarehouse = products.reduce((sum, p) => sum + p.warehouseStock, 0);
+            const totalShelf = products.reduce((sum, p) => sum + p.shelfCurrent, 0);
+            const lowShelfItems = products.filter(p => p.shelfCurrent <= p.shelfMin);
+
+            document.getElementById('stat-total-sku').textContent = totalSku;
+            document.getElementById('badge-total-items').textContent = totalSku;
+            document.getElementById('stat-warehouse-stock').innerHTML = `${totalWarehouse.toLocaleString('id-ID')} <span class="text-xs font-sans font-normal text-slate-500">unit</span>`;
+            document.getElementById('stat-shelf-stock').innerHTML = `${totalShelf.toLocaleString('id-ID')} <span class="text-xs font-sans font-normal text-slate-500">unit</span>`;
+            document.getElementById('stat-low-shelf').innerHTML = `${lowShelfItems.length} <span class="text-xs font-sans font-normal text-slate-500">rak</span>`;
+
+            // Update Badges & Urgent Banner
+            const alertBadge = document.getElementById('badge-alert-count');
+            const banner = document.getElementById('urgent-shelf-banner');
+
+            if (lowShelfItems.length > 0) {
+                alertBadge.textContent = lowShelfItems.length;
+                alertBadge.classList.remove('hidden');
+
+                banner.classList.remove('hidden');
+                document.getElementById('banner-alert-badge').textContent = `${lowShelfItems.length} Produk`;
+                const names = lowShelfItems.map(i => i.name).join(', ');
+                document.getElementById('banner-alert-desc').textContent = `Display rak menipis untuk: ${names}. Segera ambil dari gudang untuk mengisi rak.`;
+            } else {
+                alertBadge.classList.add('hidden');
+                banner.classList.add('hidden');
+            }
+        }
+
+        function renderInventory() {
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            const filter = document.getElementById('filter-status').value;
+            const grid = document.getElementById('product-grid');
+
+            const filtered = products.filter(p => {
+                const matchesSearch = p.name.toLowerCase().includes(query) || p.sku.toLowerCase().includes(query);
+                if (!matchesSearch) return false;
+
+                if (filter === 'low-shelf') return p.shelfCurrent <= p.shelfMin;
+                if (filter === 'low-warehouse') return p.warehouseStock <= 10;
+                if (filter === 'healthy') return p.shelfCurrent > p.shelfMin && p.warehouseStock > 10;
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full bg-white rounded-2xl border border-slate-200 p-12 text-center">
+                        <div class="w-12 h-12 rounded-2xl bg-agri-50 text-agri-600 flex items-center justify-center mx-auto mb-3">
+                            <i data-lucide="package-search" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-800">Tidak ada barang ditemukan</h3>
+                        <p class="text-xs text-slate-500 mt-1">Ubah kata kunci pencarian atau tambahkan jenis barang baru.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            grid.innerHTML = filtered.map(p => {
+                const isShelfLow = p.shelfCurrent <= p.shelfMin;
+                const isWarehouseLow = p.warehouseStock <= 10;
+                const shelfPercent = Math.min(100, Math.round((p.shelfCurrent / p.shelfMax) * 100));
+
+                return `
+                <div class="bg-white rounded-2xl border ${isShelfLow ? 'border-amber-300 ring-2 ring-amber-400/20' : 'border-slate-200/90'} shadow-sm hover:shadow-md transition overflow-hidden flex flex-col justify-between">
+                    <div>
+                        <!-- Image Header -->
+                        <div class="relative h-44 bg-slate-100 overflow-hidden">
+                            <img src="${p.image}" alt="${p.name}" onerror="this.src='https://placehold.co/400x300/278b4d/ffffff?text=Produk+Pertanian'" class="w-full h-full object-cover">
+                            
+                            <!-- SKU Badge -->
+                            <span class="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-slate-900/80 backdrop-blur-sm text-white font-mono text-xs font-semibold">
+                                ${p.sku}
+                            </span>
+
+                            <!-- POS Live Indicator -->
+                            <span class="absolute top-3 right-3 px-2 py-1 rounded-lg bg-agri-600/95 text-white text-[11px] font-semibold flex items-center gap-1 shadow">
+                                <i data-lucide="check-circle-2" class="w-3 h-3"></i> Live POS
+                            </span>
+
+                            <!-- Alert Pill if Shelf Low -->
+                            ${isShelfLow ? `
+                                <div class="absolute bottom-2.5 left-3 right-3 px-3 py-1.5 rounded-xl bg-amber-500 text-slate-950 text-xs font-extrabold flex items-center justify-between shadow">
+                                    <span class="flex items-center gap-1.5">
+                                        <i data-lucide="alert-circle" class="w-4 h-4"></i> Display Rak Menipis!
+                                    </span>
+                                    <span>Min: ${p.shelfMin}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Card Content -->
+                        <div class="p-4 space-y-3.5">
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-base leading-snug line-clamp-2">${p.name}</h3>
+                                <p class="text-lg font-extrabold text-agri-700 font-mono mt-1">${formatRupiah(p.price)}</p>
+                            </div>
+
+                            <!-- Warehouse Stock vs Shelf Display -->
+                            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 space-y-2.5">
+                                <!-- Stok Gudang -->
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-slate-600 font-medium flex items-center gap-1.5">
+                                        <i data-lucide="warehouse" class="w-3.5 h-3.5 text-agri-600"></i> Stok Gudang
+                                    </span>
+                                    <span class="font-mono font-bold ${isWarehouseLow ? 'text-rose-600' : 'text-slate-900'}">
+                                        ${p.warehouseStock} unit ${isWarehouseLow ? '(Menipis)' : ''}
+                                    </span>
+                                </div>
+
+                                <!-- Kapasitas Rak Display -->
+                                <div>
+                                    <div class="flex items-center justify-between text-xs mb-1">
+                                        <span class="text-slate-600 font-medium flex items-center gap-1.5">
+                                            <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-sky-600"></i> Display Rak
+                                        </span>
+                                        <span class="font-mono font-bold ${isShelfLow ? 'text-amber-600' : 'text-slate-800'}">
+                                            ${p.shelfCurrent} / ${p.shelfMax} unit
+                                        </span>
+                                    </div>
+                                    <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                                        <div class="h-full rounded-full transition-all duration-300 ${isShelfLow ? 'bg-amber-500' : 'bg-agri-500'}" style="width: ${shelfPercent}%"></div>
+                                    </div>
+                                    <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                                        <span>Batas notif: &le; ${p.shelfMin}</span>
+                                        <span>${shelfPercent}% terisi</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Actions -->
+                    <div class="px-4 pb-4 pt-1 flex items-center gap-2">
+                        <button onclick="openUpdateModal('${p.id}', 'restock-warehouse')" class="flex-1 py-2 px-3 bg-agri-50 hover:bg-agri-100 text-agri-800 border border-agri-200 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Stok Gudang
+                        </button>
+                        <button onclick="openUpdateModal('${p.id}', 'refill-shelf')" class="flex-1 py-2 px-3 ${isShelfLow ? 'bg-amber-500 hover:bg-amber-600 text-slate-950' : 'bg-slate-800 hover:bg-slate-900 text-white'} text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm">
+                            <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i> Isi Rak
+                        </button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function renderReplenishmentTab() {
+            const container = document.getElementById('replenishment-list');
+            const lowShelfItems = products.filter(p => p.shelfCurrent <= p.shelfMin);
+
+            if (lowShelfItems.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white rounded-2xl border border-agri-200 p-10 text-center shadow-sm">
+                        <div class="w-14 h-14 rounded-2xl bg-agri-100 text-agri-600 flex items-center justify-center mx-auto mb-3">
+                            <i data-lucide="check-circle-2" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-900 text-base">Semua Rak Pajangan dalam Kondisi Aman</h3>
+                        <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-md mx-auto">
+                            Tidak ada barang yang berada di bawah batas minimal kapasitas rak saat ini.
+                        </p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            container.innerHTML = lowShelfItems.map(p => {
+                const neededToFull = Math.max(0, p.shelfMax - p.shelfCurrent);
+                const recommendedTake = Math.min(neededToFull, p.warehouseStock);
+                const isWarehouseShort = p.warehouseStock < neededToFull;
+
+                return `
+                <div class="bg-white rounded-2xl border-l-4 border-l-amber-500 border border-slate-200 p-5 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div class="flex items-start gap-4">
+                        <img src="${p.image}" alt="${p.name}" class="w-16 h-16 rounded-xl object-cover border border-slate-200 flex-shrink-0">
+                        <div class="space-y-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-xs font-bold">${p.sku}</span>
+                                <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">
+                                    Sisa Rak: ${p.shelfCurrent} / ${p.shelfMax} (Min: ${p.shelfMin})
+                                </span>
+                            </div>
+                            <h3 class="font-bold text-slate-900 text-base">${p.name}</h3>
+                            <p class="text-xs text-slate-600">
+                                Rekomendasi ambil dari gudang: <strong class="text-agri-700 font-mono">${recommendedTake} unit</strong>
+                                (Stok gudang tersedia: <strong class="font-mono">${p.warehouseStock} unit</strong>)
+                            </p>
+                            ${isWarehouseShort ? `
+                                <p class="text-xs text-rose-600 font-semibold flex items-center gap-1 mt-1">
+                                    <i data-lucide="alert-octagon" class="w-3.5 h-3.5"></i>
+                                    Stok gudang tidak cukup untuk memenuhi kapasitas rak! Segera ajukan PO ke Supplier.
+                                </p>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        ${p.warehouseStock > 0 ? `
+                            <button onclick="quickRefillShelf('${p.id}')" class="w-full sm:w-auto px-4 py-2.5 bg-agri-600 hover:bg-agri-700 text-white text-xs font-bold rounded-xl shadow transition flex items-center justify-center gap-1.5">
+                                <i data-lucide="check-check" class="w-4 h-4"></i>
+                                <span>Konfirmasi Isi Ulang (${recommendedTake} Unit)</span>
+                            </button>
+                        ` : `
+                            <button onclick="openUpdateModal('${p.id}', 'restock-warehouse')" class="w-full sm:w-auto px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow transition flex items-center justify-center gap-1.5">
+                                <i data-lucide="truck" class="w-4 h-4"></i>
+                                <span>Restock Gudang Dulu</span>
+                            </button>
+                        `}
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function quickRefillShelf(productId) {
+            const p = products.find(item => item.id === productId);
+            if (!p) return;
+
+            const needed = Math.max(0, p.shelfMax - p.shelfCurrent);
+            const take = Math.min(needed, p.warehouseStock);
+            if (take <= 0) return;
+
+            p.warehouseStock -= take;
+            p.shelfCurrent += take;
+            p.updatedAt = new Date().toISOString();
+
+            addLog('refill', `Konfirmasi isi ulang rak "${p.name}" (+${take} unit). Rak kini penuh (${p.shelfCurrent}/${p.shelfMax}), sisa gudang ${p.warehouseStock} unit.`);
+            broadcastCatalogToPOS('SHELF_REPLENISHED');
+            refreshAllViews();
+            showToast(`Rak "${p.name}" berhasil diisi ulang (+${take} unit)!`, 'success');
+        }
+
+        /**
+         * 7. ACTIVITY LOGS & TOAST NOTIFICATIONS
+         */
+        function addLog(type, message) {
+            activityLogs.unshift({
+                time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                type,
+                message
+            });
+            if (activityLogs.length > 50) activityLogs.pop();
+            renderLogs();
+        }
+
+        function clearLogs() {
+            activityLogs = [];
+            renderLogs();
+        }
+
+        function renderLogs() {
+            const list = document.getElementById('activity-log-list');
+            if (activityLogs.length === 0) {
+                list.innerHTML = `<p class="p-6 text-center text-xs text-slate-400">Belum ada aktivitas tercatat.</p>`;
+                return;
+            }
+
+            list.innerHTML = activityLogs.map(log => {
+                let badgeColor = 'bg-agri-100 text-agri-800';
+                let label = 'SYNC';
+                if (log.type === 'alert') { badgeColor = 'bg-amber-100 text-amber-800'; label = 'ALERT RAK'; }
+                if (log.type === 'pos') { badgeColor = 'bg-sky-100 text-sky-800'; label = 'POS KASIR'; }
+                if (log.type === 'add') { badgeColor = 'bg-emerald-100 text-emerald-800'; label = 'BARU'; }
+
+                return `
+                <div class="px-5 py-3 flex items-start gap-3 text-xs">
+                    <span class="font-mono text-slate-400 flex-shrink-0 mt-0.5">${log.time}</span>
+                    <span class="px-2 py-0.5 rounded font-bold text-[10px] flex-shrink-0 ${badgeColor}">${label}</span>
+                    <p class="text-slate-700 leading-relaxed">${log.message}</p>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function showToast(message, variant = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            const styles = {
+                success: 'bg-agri-900 text-white border-agri-700',
+                warning: 'bg-amber-500 text-slate-950 border-amber-600 font-semibold',
+                error: 'bg-rose-600 text-white border-rose-700'
+            };
+
+            const icons = {
+                success: 'check-circle-2',
+                warning: 'bell-ring',
+                error: 'alert-circle'
+            };
+
+            toast.className = `pointer-events-auto p-3.5 rounded-xl border shadow-lg flex items-center gap-2.5 text-xs transition-all duration-300 ${styles[variant] || styles.success}`;
+            toast.innerHTML = `
+                <i data-lucide="${icons[variant] || 'info'}" class="w-4 h-4 flex-shrink-0"></i>
+                <span class="flex-1 leading-snug">${message}</span>
+            `;
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(8px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        /**
+         * 8. MODAL & NAVIGATION HELPERS
+         */
+        function switchTab(tabName) {
+            ['inventory', 'replenishment', 'integration'].forEach(name => {
+                document.getElementById(`tab-${name}`).classList.add('hidden');
+                const btn = document.getElementById(`nav-${name}`);
+                btn.classList.remove('bg-agri-600', 'text-white', 'font-semibold', 'shadow-sm');
+                btn.classList.add('text-agri-200', 'font-medium');
+            });
+
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`nav-${tabName}`);
+            activeBtn.classList.add('bg-agri-600', 'text-white', 'font-semibold', 'shadow-sm');
+            activeBtn.classList.remove('text-agri-200', 'font-medium');
+
+            // Close mobile drawer if open
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar.classList.contains('-translate-x-full') && window.innerWidth < 1024) {
+                sidebar.classList.add('-translate-x-full');
+            }
+        }
+
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('-translate-x-full');
+        }
+
+        function openProductModal() {
+            document.getElementById('new-product-form').reset();
+            capturedPhotoDataUrl = '';
+            setPhotoPreview('');
+            stopLiveCamera();
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
+
+        function closeProductModal() {
+            stopLiveCamera();
+            document.getElementById('product-modal').classList.add('hidden');
+        }
+
+        // Initialize on Window Load
+        window.onload = function() {
+            lucide.createIcons();
+            refreshAllViews();
+            broadcastCatalogToPOS('WAREHOUSE_BOOT_SYNC');
+        };
+    </script>
+</body>
+</html>

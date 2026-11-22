@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgriERP — Dashboard Terpadu Kasir, Gudang & Keuangan</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'monospace']
+        },
+        colors: {
+          agri: {
+            50: '#f2fbf5', 100: '#e1f7e8', 200: '#c4edd2', 300: '#96deaf',
+            400: '#5fc684', 500: '#38ab63', 600: '#278b4d', 700: '#216e3f',
+            800: '#1e5835', 900: '#1a482d', 950: '#0d2718'
+          },
+          earth: { 50: '#faf8f5', 100: '#f3efe6', 200: '#e6decb', 800: '#5c4d3c', 900: '#4a3e31' }
+        }
+      }
+    }
+  };
+</script>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+
+<body class="agri-pattern text-slate-800 font-sans antialiased min-h-screen lg:flex">
+
+<!-- ================= MOBILE HEADER ================= -->
+<header class="lg:hidden bg-agri-900 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40 shadow-md no-print">
+  <div class="flex items-center gap-2.5">
+    <div class="w-9 h-9 rounded-xl bg-agri-500 flex items-center justify-center"><i data-lucide="layout-dashboard" class="w-5 h-5"></i></div>
+    <div>
+      <h1 class="font-bold text-base leading-tight">Agri<span class="text-agri-300">ERP</span></h1>
+      <p class="text-[10px] text-agri-200">Kasir · Gudang · Keuangan · AI</p>
+    </div>
+  </div>
+  <button onclick="document.getElementById('sidebar').classList.toggle('-translate-x-full')" class="p-2 rounded-lg bg-agri-800 hover:bg-agri-700">
+    <i data-lucide="menu" class="w-5 h-5"></i>
+  </button>
+</header>
+
+<!-- ================= SIDEBAR ================= -->
+<aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-agri-950 text-white transform -translate-x-full lg:translate-x-0 lg:static lg:flex-shrink-0 transition-transform duration-300 flex flex-col justify-between shadow-xl no-print">
+  <div>
+    <div class="px-5 py-5 flex items-center gap-3 border-b border-agri-800/70">
+      <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-agri-400 to-agri-600 flex items-center justify-center shadow-lg shadow-agri-900/50">
+        <i data-lucide="sprout" class="w-6 h-6 text-white"></i>
+      </div>
+      <div>
+        <h1 class="font-extrabold text-lg leading-none tracking-tight">Agri<span class="text-agri-300">ERP</span></h1>
+        <p class="text-[10.5px] text-agri-300 mt-1">Enterprise Suite · v1.0</p>
+      </div>
+      <button onclick="document.getElementById('sidebar').classList.add('-translate-x-full')" class="lg:hidden ml-auto p-1.5 rounded-lg hover:bg-agri-800"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
+
+    <div class="px-4 py-4">
+      <p class="text-[10px] uppercase tracking-widest text-agri-400 font-bold px-2 mb-2">Modul ERP</p>
+      <nav class="space-y-1" id="main-nav">
+        <a href="#" data-view="dashboard" class="nav-link active"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard</a>
+        <a href="#" data-view="penjualan" class="nav-link"><i data-lucide="shopping-cart" class="w-4 h-4"></i> Penjualan (Kasir)</a>
+        <a href="#" data-view="stok" class="nav-link"><i data-lucide="warehouse" class="w-4 h-4"></i> Stok &amp; Gudang</a>
+        <a href="#" data-view="keuangan" class="nav-link"><i data-lucide="landmark" class="w-4 h-4"></i> Laporan Keuangan</a>
+        <a href="#" data-view="ai" class="nav-link"><i data-lucide="sparkles" class="w-4 h-4"></i> AI Business Insight</a>
+      </nav>
+
+      <p class="text-[10px] uppercase tracking-widest text-agri-400 font-bold px-2 mt-6 mb-2">Integrasi</p>
+      <nav class="space-y-1">
+        <a href="../kasir/index.html" target="_blank" rel="noopener" class="nav-link"><i data-lucide="monitor-smartphone" class="w-4 h-4"></i> Buka Terminal Kasir <i data-lucide="external-link" class="w-3 h-3 ml-auto opacity-60"></i></a>
+        <a href="../gudang/index.html" target="_blank" rel="noopener" class="nav-link"><i data-lucide="boxes" class="w-4 h-4"></i> Buka Gudang (WMS) <i data-lucide="external-link" class="w-3 h-3 ml-auto opacity-60"></i></a>
+        <a href="#" data-view="pengaturan" class="nav-link"><i data-lucide="settings" class="w-4 h-4"></i> Pengaturan &amp; AI</a>
+      </nav>
+    </div>
+  </div>
+
+  <div class="p-4 border-t border-agri-800/70">
+    <div class="bg-agri-900/80 border border-agri-700/60 rounded-xl p-3">
+      <div class="flex items-center gap-2">
+        <span class="relative flex h-2.5 w-2.5">
+          <span class="pulse-dot relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
+        </span>
+        <span class="text-xs font-semibold text-emerald-300">Sinkronisasi Aktif</span>
+      </div>
+      <p class="text-[10.5px] text-agri-300 mt-1 font-mono" id="sidebar-sync-time">Menunggu event…</p>
+      <p class="text-[10.5px] text-agri-300 mt-2 leading-snug">Kasir &amp; Gudang terhubung melalui <span class="font-mono text-agri-200">BroadcastChannel</span>.</p>
+    </div>
+    <p class="text-[10px] text-agri-500 mt-3 text-center">© 2026 AgriERP · Toko Saprotan &amp; Hasil Tani</p>
+  </div>
+</aside>
+
+<!-- ================= MAIN ================= -->
+<div class="flex-1 min-w-0 flex flex-col">
+
+  <!-- TOPBAR -->
+  <header class="bg-white/95 backdrop-blur border-b border-slate-200 sticky top-0 z-30 no-print">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center gap-3 justify-between">
+      <div>
+        <h2 id="page-title" class="text-lg font-extrabold text-agri-950 leading-tight">Dashboard</h2>
+        <p id="page-subtitle" class="text-[11.5px] text-slate-500">Ringkasan terpadu aktivitas kasir, gudang, dan keuangan</p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center gap-1 bg-slate-100 rounded-xl p-1" id="preset-group">
+          <button data-preset="today" class="chip">Hari ini</button>
+          <button data-preset="7d" class="chip">7 Hari</button>
+          <button data-preset="30d" class="chip active">30 Hari</button>
+          <button data-preset="month" class="chip">Bulan ini</button>
+          <button data-preset="year" class="chip">Tahun ini</button>
+          <button data-preset="all" class="chip">Semua</button>
+        </div>
+
+        <select id="granularity" class="text-xs font-semibold bg-white border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-agri-500">
+          <option value="auto">Agregasi: Otomatis</option>
+          <option value="day">Per Hari</option>
+          <option value="month">Per Bulan</option>
+          <option value="year">Per Tahun</option>
+        </select>
+
+        <button onclick="App.refresh(true)" title="Muat ulang data" class="p-2 rounded-xl bg-agri-50 border border-agri-200 text-agri-700 hover:bg-agri-100 transition">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+        </button>
+        <button onclick="App.exportCSV()" class="px-3 py-2 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-xs font-bold flex items-center gap-1.5 transition">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i> Ekspor CSV
+        </button>
+      </div>
+    </div>
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 pb-2 -mt-1">
+      <p class="text-[11px] text-slate-500 flex items-center gap-1.5">
+        <i data-lucide="calendar-range" class="w-3.5 h-3.5 text-agri-600"></i>
+        Periode aktif: <span id="period-label" class="font-semibold text-agri-700">30 hari terakhir</span>
+        <span class="text-slate-300">|</span>
+        <i data-lucide="database" class="w-3.5 h-3.5 text-agri-600"></i>
+        <span id="data-meta" class="font-mono text-[10.5px]">—</span>
+      </p>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-[1600px] w-full mx-auto p-4 sm:p-6 space-y-6">
+
+    <!-- ================================================================
+         VIEW: DASHBOARD
+    ================================================================= -->
+    <section id="view-dashboard" class="view active space-y-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div class="card p-4">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Penjualan</p>
+              <p class="text-2xl font-extrabold text-agri-900 mt-1" id="kpi-revenue">—</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-agri-100 text-agri-700 flex items-center justify-center"><i data-lucide="wallet" class="w-5 h-5"></i></div>
+          </div>
+          <div class="flex items-center gap-2 mt-2">
+            <span class="badge bg-slate-100 text-slate-600" id="kpi-revenue-delta">—</span>
+            <span class="text-[10.5px] text-slate-400">vs periode sebelumnya</span>
+          </div>
+          <div class="h-9 mt-2"><canvas class="kpi-spark" id="spark-revenue"></canvas></div>
+        </div>
+
+        <div class="card p-4">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Transaksi</p>
+              <p class="text-2xl font-extrabold text-agri-900 mt-1" id="kpi-tx">—</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><i data-lucide="receipt-text" class="w-5 h-5"></i></div>
+          </div>
+          <p class="text-[10.5px] text-slate-400 mt-2" id="kpi-tx-sub">Rata-rata transaksi —</p>
+          <div class="h-9 mt-2"><canvas class="kpi-spark" id="spark-tx"></canvas></div>
+        </div>
+
+        <div class="card p-4">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Laba Bersih</p>
+              <p class="text-2xl font-extrabold text-agri-900 mt-1" id="kpi-net">—</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><i data-lucide="trending-up" class="w-5 h-5"></i></div>
+          </div>
+          <p class="text-[10.5px] text-slate-400 mt-2" id="kpi-net-sub">Margin —</p>
+          <div class="h-9 mt-2"><canvas class="kpi-spark" id="spark-net"></canvas></div>
+        </div>
+
+        <div class="card p-4">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Nilai Inventori</p>
+              <p class="text-2xl font-extrabold text-agri-900 mt-1" id="kpi-inventory">—</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><i data-lucide="package-search" class="w-5 h-5"></i></div>
+          </div>
+          <p class="text-[10.5px] text-slate-400 mt-2" id="kpi-inventory-sub">— SKU aktif</p>
+          <div class="h-9 mt-2"><canvas class="kpi-spark" id="spark-stock"></canvas></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div class="card p-4 xl:col-span-2">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div>
+              <h3 class="font-bold text-sm text-agri-950">Tren Penjualan &amp; Laba</h3>
+              <p class="text-[11px] text-slate-500">Omzet, laba kotor, dan jumlah transaksi per periode</p>
+            </div>
+            <span class="badge bg-agri-50 text-agri-700 border border-agri-200" id="trend-badge">—</span>
+          </div>
+          <div class="h-[300px]"><canvas id="chart-trend"></canvas></div>
+        </div>
+
+        <div class="card p-4">
+          <h3 class="font-bold text-sm text-agri-950">Komposisi Pembayaran</h3>
+          <p class="text-[11px] text-slate-500 mb-2">Distribusi omzet per metode bayar</p>
+          <div class="h-[220px]"><canvas id="chart-payment"></canvas></div>
+          <div id="payment-legend" class="mt-2 space-y-1"></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div class="card p-4 xl:col-span-2">
+          <h3 class="font-bold text-sm text-agri-950">Produk Terlaris</h3>
+          <p class="text-[11px] text-slate-500 mb-3">Berdasarkan kontribusi omzet pada periode aktif</p>
+          <div class="h-[280px]"><canvas id="chart-top-products"></canvas></div>
+        </div>
+        <div class="card p-4">
+          <h3 class="font-bold text-sm text-agri-950">Omzet per Kategori</h3>
+          <p class="text-[11px] text-slate-500 mb-2">Kontribusi lini produk</p>
+          <div class="h-[240px]"><canvas id="chart-category"></canvas></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div class="card p-4">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="font-bold text-sm text-agri-950">Peringatan Stok</h3>
+              <p class="text-[11px] text-slate-500">Produk di bawah titik reorder / cover &lt; 14 hari</p>
+            </div>
+            <a href="#" data-view="stok" class="text-[11px] font-bold text-agri-700 hover:underline">Lihat semua</a>
+          </div>
+          <div class="table-wrap"><table class="data"><thead><tr><th>Produk</th><th>Stok</th><th>Cover</th><th>Status</th></tr></thead><tbody id="table-dashboard-stock"></tbody></table></div>
+        </div>
+
+        <div class="card p-4">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="font-bold text-sm text-agri-950">Transaksi Terbaru</h3>
+              <p class="text-[11px] text-slate-500">Aktivitas kasir terakhir</p>
+            </div>
+            <a href="#" data-view="penjualan" class="text-[11px] font-bold text-agri-700 hover:underline">Detail</a>
+          </div>
+          <div class="table-wrap"><table class="data"><thead><tr><th>Invoice</th><th>Waktu</th><th>Metode</th><th class="text-right">Total</th></tr></thead><tbody id="table-recent-sales"></tbody></table></div>
+        </div>
+      </div>
+
+      <div class="card p-4 border-l-4 border-l-agri-500 bg-gradient-to-r from-agri-50 to-white">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-xl bg-agri-600 text-white flex items-center justify-center flex-shrink-0"><i data-lucide="sparkles" class="w-5 h-5"></i></div>
+            <div>
+              <h3 class="font-bold text-sm text-agri-950">AI Business Insight siap dianalisis</h3>
+              <p class="text-[11.5px] text-slate-600 mt-0.5" id="ai-teaser">Jalankan analisis untuk mendapatkan insight penjualan, risiko stok, dan strategi 7/30/90 hari.</p>
+            </div>
+          </div>
+          <button onclick="App.go('ai');App.runAI()" class="px-4 py-2 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-xs font-bold flex items-center gap-1.5">
+            <i data-lucide="wand-2" class="w-3.5 h-3.5"></i> Analisis Sekarang
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         VIEW: PENJUALAN
+    ================================================================= -->
+    <section id="view-penjualan" class="view space-y-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div class="card p-4"><p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Omzet</p><p class="text-2xl font-extrabold text-agri-900 mt-1" id="sales-revenue">—</p><p class="text-[10.5px] text-slate-400 mt-1" id="sales-revenue-sub">—</p></div>
+        <div class="card p-4"><p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Unit Terjual</p><p class="text-2xl font-extrabold text-agri-900 mt-1" id="sales-units">—</p><p class="text-[10.5px] text-slate-400 mt-1" id="sales-units-sub">—</p></div>
+        <div class="card p-4"><p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Rata-rata / Transaksi</p><p class="text-2xl font-extrabold text-agri-900 mt-1" id="sales-avg">—</p><p class="text-[10.5px] text-slate-400 mt-1" id="sales-avg-sub">—</p></div>
+        <div class="card p-4"><p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Diskon Diberikan</p><p class="text-2xl font-extrabold text-agri-900 mt-1" id="sales-discount">—</p><p class="text-[10.5px] text-slate-400 mt-1" id="sales-discount-sub">—</p></div>
+      </div>
+
+      <div class="card p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h3 class="font-bold text-sm text-agri-950">Penjualan per <span id="sales-gran-label">Hari</span></h3>
+            <p class="text-[11px] text-slate-500">Gunakan filter agregasi di atas untuk melihat per hari, bulan, atau tahun</p>
+          </div>
+          <span class="badge bg-agri-50 text-agri-700 border border-agri-200" id="sales-peak">—</span>
+        </div>
+        <div class="h-[300px]"><canvas id="chart-sales"></canvas></div>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div class="card p-4">
+          <h3 class="font-bold text-sm text-agri-950 mb-2">Kinerja Kategori</h3>
+          <div class="table-wrap"><table class="data"><thead><tr><th>Kategori</th><th>Unit</th><th class="text-right">Omzet</th><th class="text-right">Kontribusi</th></tr></thead><tbody id="table-categories"></tbody></table></div>
+        </div>
+        <div class="card p-4">
+          <h3 class="font-bold text-sm text-agri-950 mb-2">Kinerja Kasir</h3>
+          <div class="table-wrap"><table class="data"><thead><tr><th>Kasir</th><th>Transaksi</th><th class="text-right">Omzet</th><th class="text-right">Rata-rata</th></tr></thead><tbody id="table-cashiers"></tbody></table></div>
+        </div>
+      </div>
+
+      <div class="card p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h3 class="font-bold text-sm text-agri-950">Riwayat Transaksi</h3>
+          <input id="sales-search" oninput="App.renderSalesTable()" placeholder="Cari invoice / kasir…" class="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 w-56 focus:outline-none focus:ring-2 focus:ring-agri-500">
+        </div>
+        <div class="table-wrap max-h-[420px] overflow-y-auto">
+          <table class="data"><thead><tr><th>Invoice</th><th>Waktu</th><th>Kasir</th><th>Item</th><th>Metode</th><th class="text-right">Total</th></tr></thead><tbody id="table-sales"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         VIEW: STOK & GUDANG
+    ================================================================= -->
+    <section id="view-stok" class="view space-y-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div class="card p-4"><p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total SKU</p><p class="text-2xl font-extrabold text-agri-900 mt-1" id="stock-sku">—</p><p class="text-[10.5px] text-slate-400 mt-1">Produk terdaftar</p></div>
+        <div class="card p-4"><p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Nilai Inventori</p><p class="text-2xl font-extrabold text-agri-900 mt-1" id="stock-value">—</p><p class="text-[10.5px] text-slate-400 mt-1">Harga pokok × stok gudang</p></div>
+        <div class="card p-4"><p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Stok Kritis</p><p class="text-2xl font-extrabold text-rose-600 mt-1" id="stock-critical">—</p><p class="text-[10.5px] text-slate-400 mt-1">Perlu restock segera</p></div>
+        <div class="card p-4"><p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Perputaran Stok</p><p class="text-2xl font-extrabold text-agri-900 mt-1" id="stock-turns">—</p><p class="text-[10.5px] text-slate-400 mt-1">Estimasi tahunan</p></div>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div class="card p-4 xl:col-span-2">
+          <h3 class="font-bold text-sm text-agri-950">Pergerakan Stok (Masuk vs Terjual)</h3>
+          <p class="text-[11px] text-slate-500 mb-3">Penerimaan barang dari supplier dibanding unit terjual di kasir</p>
+          <div class="h-[280px]"><canvas id="chart-stock-flow"></canvas></div>
+        </div>
+        <div class="card p-4">
+          <h3 class="font-bold text-sm text-agri-950 mb-2">Status Inventori</h3>
+          <div id="stock-status-list" class="space-y-2"></div>
+        </div>
+      </div>
+
+      <div class="card p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h3 class="font-bold text-sm text-agri-950">Daftar Stok &amp; Rekomendasi Restock</h3>
+            <p class="text-[11px] text-slate-500">Cover = perkiraan hari stok bertahan berdasarkan kecepatan jual 30 hari</p>
+          </div>
+          <input id="stock-search" oninput="App.renderInventory()" placeholder="Cari produk / SKU…" class="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 w-56 focus:outline-none focus:ring-2 focus:ring-agri-500">
+        </div>
+        <div class="table-wrap max-h-[460px] overflow-y-auto">
+          <table class="data"><thead><tr><th>SKU</th><th>Produk</th><th>Kategori</th><th class="text-right">Gudang</th><th class="text-right">Rak</th><th class="text-right">Terjual 30h</th><th class="text-right">Cover</th><th>Status</th><th class="text-right">Saran Restock</th></tr></thead><tbody id="table-inventory"></tbody></table>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div class="card p-4">
+          <h3 class="font-bold text-sm text-agri-950 mb-2">Log Pergerakan Stok</h3>
+          <div class="table-wrap max-h-[320px] overflow-y-auto"><table class="data"><thead><tr><th>Waktu</th><th>Tipe</th><th>Produk</th><th class="text-right">Qty</th></tr></thead><tbody id="table-stock-moves"></tbody></table></div>
+        </div>
+        <div class="card p-4">
+          <h3 class="font-bold text-sm text-agri-950 mb-2">Pembelian Terakhir</h3>
+          <div class="table-wrap max-h-[320px] overflow-y-auto"><table class="data"><thead><tr><th>Tanggal</th><th>Produk</th><th class="text-right">Qty</th><th class="text-right">Nilai</th></tr></thead><tbody id="table-purchases"></tbody></table></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         VIEW: KEUANGAN
+    ================================================================= -->
+    <section id="view-keuangan" class="view space-y-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div class="card p-4"><p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Pendapatan</p><p class="text-2xl font-extrabold text-agri-900 mt-1" id="fin-revenue">—</p><p class="text-[10.5px] text-slate-400 mt-1" id="fin-revenue-sub">—</p></div>
+        <div class="card p-4"><p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">HPP</p><p class="text-2xl font-extrabold text-agri-900 mt-1" id="fin-hpp">—</p><p class="text-[10.5px] text-slate-400 mt-1" id="fin-hpp-sub">—</p></div>
+        <div class="card p-4"><p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Biaya Operasional</p><p class="text-2xl font-extrabold text-agri-900 mt-1" id="fin-opex">—</p><p class="text-[10.5px] text-slate-400 mt-1" id="fin-opex-sub">—</p></div>
+        <div class="card p-4"><p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Laba Bersih</p><p class="text-2xl font-extrabold text-agri-900 mt-1" id="fin-net">—</p><p class="text-[10.5px] text-slate-400 mt-1" id="fin-net-sub">—</p></div>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div class="card p-4 xl:col-span-2">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="font-bold text-sm text-agri-950">Laporan Laba Rugi per Bulan</h3>
+              <p class="text-[11px] text-slate-500">Pendapatan, laba kotor, dan laba bersih 12 bulan terakhir</p>
+            </div>
+            <button onclick="window.print()" class="no-print text-[11px] font-bold text-agri-700 hover:underline flex items-center gap-1"><i data-lucide="printer" class="w-3.5 h-3.5"></i> Cetak</button>
+          </div>
+          <div class="h-[300px]"><canvas id="chart-finance"></canvas></div>
+        </div>
+        <div class="card p-4">
+          <h3 class="font-bold text-sm text-agri-950 mb-2">Rincian Biaya Operasional</h3>
+          <div id="opex-breakdown" class="space-y-2"></div>
+          <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-600">Total</span>
+            <span class="text-sm font-extrabold text-agri-900" id="opex-total">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h3 class="font-bold text-sm text-agri-950">Rekap Keuangan Bulanan</h3>
+          <span class="text-[11px] text-slate-500">Semua angka dalam Rupiah</span>
+        </div>
+        <div class="table-wrap max-h-[460px] overflow-y-auto">
+          <table class="data"><thead><tr><th>Bulan</th><th class="text-right">Pendapatan</th><th class="text-right">HPP</th><th class="text-right">Laba Kotor</th><th class="text-right">Biaya Bayar</th><th class="text-right">Opex</th><th class="text-right">Laba Bersih</th><th class="text-right">Margin</th></tr></thead><tbody id="table-finance"></tbody></table>
+        </div>
+      </div>
+
+      <div class="card p-4 bg-agri-50/60 border-agri-200">
+        <h3 class="font-bold text-sm text-agri-950 mb-2 flex items-center gap-1.5"><i data-lucide="info" class="w-4 h-4 text-agri-700"></i> Catatan Metodologi</h3>
+        <ul class="text-[11.5px] text-slate-600 space-y-1 ml-4 list-disc">
+          <li><b>Pendapatan</b> = total transaksi termasuk PPN 11%.</li>
+          <li><b>HPP</b> = harga pokok penjualan dari setiap item terjual (modal × kuantitas).</li>
+          <li><b>Laba kotor</b> = subtotal − diskon − HPP. <b>Laba bersih</b> = laba kotor − biaya pembayaran − biaya operasional.</li>
+          <li>Data bersumber dari modul Kasir (transaksi) dan Gudang (penerimaan barang), disinkronkan real-time.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         VIEW: AI INSIGHT
+    ================================================================= -->
+    <section id="view-ai" class="view space-y-6">
+      <div class="card p-5 bg-gradient-to-br from-agri-950 to-agri-800 text-white border-agri-700 relative overflow-hidden">
+        <div class="absolute -right-10 -top-10 w-48 h-48 rounded-full bg-agri-600/30 blur-2xl"></div>
+        <div class="relative flex flex-wrap items-start justify-between gap-4">
+          <div class="flex items-start gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center"><i data-lucide="brain-circuit" class="w-6 h-6 text-agri-200"></i></div>
+            <div>
+              <h3 class="font-extrabold text-lg">AI Business Insight &amp; Strategi</h3>
+              <p class="text-[12px] text-agri-200 mt-1 max-w-xl">Mesin analitik membaca data kasir, gudang, dan keuangan, lalu menyusun insight serta rekomendasi strategi bisnis yang relevan.</p>
+              <div class="flex flex-wrap items-center gap-2 mt-3">
+                <span class="badge bg-white/10 text-agri-100 border border-white/20" id="ai-mode-badge"><i data-lucide="cpu" class="w-3 h-3"></i> Analitik Lokal (offline)</span>
+                <span class="badge bg-white/10 text-agri-100 border border-white/20" id="ai-period-badge">—</span>
+              </div>
+            </div>
+          </div>
+          <button onclick="App.runAI()" id="btn-run-ai" class="px-5 py-2.5 rounded-xl bg-agri-400 hover:bg-agri-300 text-agri-950 text-sm font-extrabold flex items-center gap-2 shadow-lg shadow-agri-950/40">
+            <i data-lucide="wand-2" class="w-4 h-4"></i> Jalankan Analisis
+          </button>
+        </div>
+      </div>
+
+      <div id="ai-error" class="hidden card p-3 border-l-4 border-l-amber-500 bg-amber-50 text-[12px] text-amber-800"></div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4" id="ai-insight-grid">
+        <div class="card p-4 skeleton h-32"></div>
+        <div class="card p-4 skeleton h-32"></div>
+      </div>
+
+      <div class="card p-4">
+        <h3 class="font-bold text-sm text-agri-950 mb-1 flex items-center gap-1.5"><i data-lucide="target" class="w-4 h-4 text-agri-700"></i> Rencana Strategi Bisnis</h3>
+        <p class="text-[11px] text-slate-500 mb-3">Roadmap eksekusi berdasarkan kondisi data saat ini</p>
+        <div id="ai-plan-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
+      </div>
+
+      <div class="card p-4">
+        <h3 class="font-bold text-sm text-agri-950 mb-1 flex items-center gap-1.5"><i data-lucide="message-square-text" class="w-4 h-4 text-agri-700"></i> Tanya AI tentang bisnis Anda</h3>
+        <p class="text-[11px] text-slate-500 mb-3">Contoh: "Produk mana yang harus saya restock minggu ini?" atau "Bagaimana cara menaikkan margin?"</p>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <input id="ai-question" placeholder="Tulis pertanyaan bisnis Anda…" class="flex-1 text-sm bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-agri-500">
+          <button onclick="App.askAI()" class="px-5 py-2.5 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-sm font-bold flex items-center justify-center gap-2">
+            <i data-lucide="send" class="w-4 h-4"></i> Tanya
+          </button>
+        </div>
+        <div id="ai-answer-wrap" class="mt-4 hidden">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-7 h-7 rounded-lg bg-agri-600 text-white flex items-center justify-center"><i data-lucide="sparkles" class="w-4 h-4"></i></div>
+            <span class="text-xs font-bold text-agri-950">Jawaban AI</span>
+            <span class="text-[10px] text-slate-400" id="ai-answer-meta"></span>
+          </div>
+          <div id="ai-answer" class="ai-prose bg-agri-50/60 border border-agri-100 rounded-xl p-4"></div>
+        </div>
+      </div>
+
+      <div class="card p-4 bg-slate-50 border-slate-200">
+        <p class="text-[11.5px] text-slate-600 flex items-start gap-2">
+          <i data-lucide="shield-check" class="w-4 h-4 text-agri-600 flex-shrink-0 mt-0.5"></i>
+          <span><b>Mode offline</b> menggunakan mesin analitik deterministik pada data ERP Anda — tidak mengirim data ke mana pun. Untuk insight naratif lebih kaya, hubungkan API AI (OpenAI/OpenRouter/Groq/Ollama) di menu <a href="#" data-view="pengaturan" class="font-bold text-agri-700 underline">Pengaturan &amp; AI</a>. Data hanya dikirim saat Anda menekan tombol analisis.</span>
+        </p>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         VIEW: PENGATURAN
+    ================================================================= -->
+    <section id="view-pengaturan" class="view space-y-6">
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div class="card p-5">
+          <h3 class="font-bold text-sm text-agri-950 mb-1 flex items-center gap-1.5"><i data-lucide="store" class="w-4 h-4 text-agri-700"></i> Identitas Toko</h3>
+          <p class="text-[11px] text-slate-500 mb-3">Digunakan pada laporan dan konteks analisis AI</p>
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">Nama Toko</label>
+          <input id="set-store" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 mb-4 focus:outline-none focus:ring-2 focus:ring-agri-500">
+          <div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5">
+            <div>
+              <p class="text-xs font-bold text-slate-700">Data demo</p>
+              <p class="text-[10.5px] text-slate-500" id="set-data-info">—</p>
+            </div>
+            <button onclick="App.resetData()" class="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold hover:bg-rose-100">Reset Data</button>
+          </div>
+        </div>
+
+        <div class="card p-5">
+          <h3 class="font-bold text-sm text-agri-950 mb-1 flex items-center gap-1.5"><i data-lucide="bot" class="w-4 h-4 text-agri-700"></i> Mesin AI</h3>
+          <p class="text-[11px] text-slate-500 mb-3">Pilih penyedia AI untuk insight naratif. Mode lokal selalu tersedia.</p>
+
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">Penyedia</label>
+          <select id="set-ai-provider" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 mb-3 focus:outline-none focus:ring-2 focus:ring-agri-500">
+            <option value="local">Analitik Lokal (offline, tanpa API key)</option>
+            <option value="openai">OpenAI-compatible API (OpenAI / OpenRouter / Groq)</option>
+            <option value="ollama">Ollama (model lokal)</option>
+          </select>
+
+          <div id="ai-cloud-fields" class="space-y-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Endpoint</label>
+              <input id="set-ai-endpoint" class="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-agri-500" placeholder="https://api.openai.com/v1/chat/completions">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Model</label>
+              <input id="set-ai-model" class="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-agri-500" placeholder="gpt-4o-mini">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">API Key <span class="font-normal text-slate-400">(disimpan lokal di browser)</span></label>
+              <input id="set-ai-key" type="password" class="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-agri-500" placeholder="sk-…">
+            </div>
+          </div>
+
+          <button onclick="App.saveSettings()" class="mt-4 w-full px-4 py-2.5 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-sm font-bold flex items-center justify-center gap-2">
+            <i data-lucide="save" class="w-4 h-4"></i> Simpan Pengaturan
+          </button>
+          <p id="settings-saved" class="text-[11px] text-agri-700 font-bold text-center mt-2 hidden">Pengaturan tersimpan ✓</p>
+        </div>
+      </div>
+
+      <div class="card p-5">
+        <h3 class="font-bold text-sm text-agri-950 mb-1 flex items-center gap-1.5"><i data-lucide="plug-zap" class="w-4 h-4 text-agri-700"></i> Status Integrasi Modul</h3>
+        <p class="text-[11px] text-slate-500 mb-3">ERP membaca event real-time dari terminal kasir dan gudang pada kanal <span class="font-mono text-agri-700">agristock_pos_sync</span>.</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="rounded-xl border border-slate-200 p-3">
+            <div class="flex items-center justify-between"><span class="text-xs font-bold text-slate-700">Terminal Kasir</span><span class="badge bg-emerald-50 text-emerald-700"><i data-lucide="circle-check" class="w-3 h-3"></i> Siap</span></div>
+            <p class="text-[10.5px] text-slate-500 mt-1">Transaksi &amp; pembayaran</p>
+            <a href="../kasir/index.html" target="_blank" class="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-agri-700 hover:underline">Buka modul <i data-lucide="arrow-up-right" class="w-3 h-3"></i></a>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3">
+            <div class="flex items-center justify-between"><span class="text-xs font-bold text-slate-700">Gudang (WMS)</span><span class="badge bg-emerald-50 text-emerald-700"><i data-lucide="circle-check" class="w-3 h-3"></i> Siap</span></div>
+            <p class="text-[10.5px] text-slate-500 mt-1">Stok, penerimaan, penyesuaian</p>
+            <a href="../gudang/index.html" target="_blank" class="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-agri-700 hover:underline">Buka modul <i data-lucide="arrow-up-right" class="w-3 h-3"></i></a>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3">
+            <div class="flex items-center justify-between"><span class="text-xs font-bold text-slate-700">Laporan Keuangan</span><span class="badge bg-emerald-50 text-emerald-700"><i data-lucide="circle-check" class="w-3 h-3"></i> Terpadu</span></div>
+            <p class="text-[10.5px] text-slate-500 mt-1">Dihitung dari data kasir &amp; gudang</p>
+            <a href="#" data-view="keuangan" class="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-agri-700 hover:underline">Lihat laporan <i data-lucide="arrow-up-right" class="w-3 h-3"></i></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card p-4">
+        <h3 class="font-bold text-sm text-agri-950 mb-2">Log Aktivitas Sistem</h3>
+        <div id="event-log" class="space-y-1.5 max-h-[260px] overflow-y-auto"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="border-t border-slate-200 bg-white/70 px-4 sm:px-6 py-3 text-[11px] text-slate-500 flex flex-wrap items-center justify-between gap-2 no-print">
+    <span>AgriERP v1.0 — integrasi Kasir (AgriPOS), Gudang (AgriStock WMS), dan Laporan Keuangan.</span>
+    <span class="font-mono" id="footer-clock">—</span>
+  </footer>
+</div>
+
+<script src="assets/data.js"></script>
+<script src="assets/ai.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
