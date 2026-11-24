@@ -4,7 +4,7 @@
   X-Frame-Options: SAMEORIGIN
   Permissions-Policy: geolocation=(), microphone=()
 
-*.html
+/*.html
   Cache-Control: public, max-age=0, must-revalidate
 
 /assets/*

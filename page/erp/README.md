@@ -14,6 +14,11 @@ Buka: <http://localhost:8080/page/erp/index.html>
 ### Opsi 2 — Buka langsung
 Klik dua kali `page/erp/index.html`. Semua fitur inti (dashboard, filter periode, AI lokal) tetap berjalan.
 
+### Opsi 3 — Versi online (Cloudflare)
+<https://sahabat-ai.ridwanfatiya.workers.dev/erp/>
+
+Deploy ulang dari root repo: `npx wrangler deploy --name sahabat-ai`.
+
 > Modul Kasir dan Gudang dibuka dari menu **Integrasi** di sidebar ERP (tab baru).
 > Agar sinkronisasi real-time aktif, buka Kasir/Gudang dan ERP pada browser yang sama.
 
