@@ -1,0 +1,10 @@
+# Alias huruf besar (path Git lama) -> huruf kecil
+/Page/*  /page/:splat  301
+
+# URL pendek yang enak dibagikan
+/erp      /page/erp/      301
+/erp/*    /page/erp/:splat  200
+/kasir    /page/kasir/    301
+/kasir/*  /page/kasir/:splat  200
+/gudang   /page/gudang/   301
+/gudang/* /page/gudang/:splat 200

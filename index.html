@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agri Suite — ERP, Kasir & Gudang Toko Saprotan</title>
+<meta name="description" content="Sistem terpadu ERP, kasir (POS), dan gudang untuk toko saprotan & hasil tani, dilengkapi AI business insight.">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'monospace']
+        },
+        colors: {
+          agri: {
+            50: '#f2fbf5', 100: '#e1f7e8', 200: '#c4edd2', 300: '#96deaf',
+            400: '#5fc684', 500: '#38ab63', 600: '#278b4d', 700: '#216e3f',
+            800: '#1e5835', 900: '#1a482d', 950: '#0d2718'
+          },
+          earth: { 50: '#faf8f5', 100: '#f3efe6', 200: '#e6decb', 800: '#5c4d3c', 900: '#4a3e31' }
+        }
+      }
+    }
+  };
+</script>
+
+<style>
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { background: #96deaf; border-radius: 9999px; }
+  .agri-pattern {
+    background-color: #f8faf9;
+    background-image: radial-gradient(#278b4d12 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  .card {
+    background: #fff; border: 1px solid rgb(226 232 240 / .9);
+    border-radius: 1rem; box-shadow: 0 1px 2px rgb(15 23 42 / .04);
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 18px 40px -24px rgb(13 39 24 / .45); border-color: #c4edd2; }
+  .badge { display: inline-flex; align-items: center; gap: .3rem; font-size: .6875rem; font-weight: 700; padding: .2rem .55rem; border-radius: 9999px; }
+  @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  .floaty { animation: floaty 6s ease-in-out infinite; }
+</style>
+</head>
+
+<body class="agri-pattern font-sans text-slate-800 antialiased min-h-screen flex flex-col">
+
+<header class="bg-agri-950 text-white sticky top-0 z-40 shadow-lg shadow-agri-950/20">
+  <div class="max-w-6xl mx-auto px-5 py-3.5 flex items-center justify-between gap-3">
+    <a href="/" class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-agri-400 to-agri-600 flex items-center justify-center shadow-lg shadow-agri-900/40">
+        <i data-lucide="sprout" class="w-5 h-5 text-white"></i>
+      </div>
+      <div>
+        <p class="font-extrabold text-lg leading-none tracking-tight">Agri<span class="text-agri-300">Suite</span></p>
+        <p class="text-[10.5px] text-agri-300 mt-1">ERP · Kasir · Gudang</p>
+      </div>
+    </a>
+
+    <nav class="hidden sm:flex items-center gap-1 text-[12.5px] font-semibold">
+      <a href="/erp/" class="px-3 py-2 rounded-lg text-agri-100 hover:bg-agri-800 hover:text-white transition">Dashboard ERP</a>
+      <a href="/kasir/" class="px-3 py-2 rounded-lg text-agri-100 hover:bg-agri-800 hover:text-white transition">Kasir</a>
+      <a href="/gudang/" class="px-3 py-2 rounded-lg text-agri-100 hover:bg-agri-800 hover:text-white transition">Gudang</a>
+    </nav>
+
+    <a href="/erp/" class="px-4 py-2 rounded-xl bg-agri-400 hover:bg-agri-300 text-agri-950 text-xs font-extrabold flex items-center gap-1.5 transition">
+      Buka ERP <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+    </a>
+  </div>
+</header>
+
+<main class="flex-1">
+
+  <!-- HERO -->
+  <section class="max-w-6xl mx-auto px-5 pt-14 pb-10 sm:pt-20 sm:pb-14 grid lg:grid-cols-2 gap-10 items-center">
+    <div>
+      <span class="badge bg-agri-100 text-agri-800 border border-agri-200 mb-4">
+        <i data-lucide="sparkles" class="w-3 h-3"></i> Terintegrasi AI Business Insight
+      </span>
+      <h1 class="text-3xl sm:text-4xl xl:text-5xl font-extrabold text-agri-950 leading-[1.1] tracking-tight">
+        Satu ekosistem untuk<br class="hidden sm:block">
+        <span class="text-agri-600">toko saprotan &amp; hasil tani</span>
+      </h1>
+      <p class="mt-4 text-[14.5px] text-slate-600 leading-relaxed max-w-xl">
+        Pantau penjualan kasir, pergerakan stok gudang, dan laporan keuangan dalam satu dashboard.
+        AI merangkum performa bisnis dan menyusun strategi 7/30/90 hari dari data Anda sendiri.
+      </p>
+
+      <div class="mt-6 flex flex-wrap gap-2.5">
+        <a href="/erp/" class="px-5 py-3 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-sm font-bold flex items-center gap-2 shadow-lg shadow-agri-700/25 transition">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Buka Dashboard ERP
+        </a>
+        <a href="/kasir/" class="px-5 py-3 rounded-xl bg-white border border-slate-200 hover:border-agri-300 hover:bg-agri-50 text-agri-900 text-sm font-bold flex items-center gap-2 transition">
+          <i data-lucide="monitor-smartphone" class="w-4 h-4"></i> Terminal Kasir
+        </a>
+        <a href="/gudang/" class="px-5 py-3 rounded-xl bg-white border border-slate-200 hover:border-agri-300 hover:bg-agri-50 text-agri-900 text-sm font-bold flex items-center gap-2 transition">
+          <i data-lucide="warehouse" class="w-4 h-4"></i> Gudang WMS
+        </a>
+      </div>
+
+      <div class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11.5px] text-slate-500">
+        <span class="flex items-center gap-1.5"><i data-lucide="wifi-off" class="w-3.5 h-3.5 text-agri-600"></i> AI mode lokal, tanpa API key</span>
+        <span class="flex items-center gap-1.5"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-agri-600"></i> Data tersimpan di browser Anda</span>
+        <span class="flex items-center gap-1.5"><i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-agri-600"></i> Sinkron real-time antar modul</span>
+      </div>
+    </div>
+
+    <!-- Mini preview -->
+    <div class="relative">
+      <div class="absolute -inset-6 bg-agri-200/40 blur-3xl rounded-full"></div>
+      <div class="relative card p-4 sm:p-5 floaty">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-rose-400"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+          </div>
+          <span class="badge bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Live
+          </span>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="rounded-xl bg-agri-50 border border-agri-100 p-3">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Omzet 30 Hari</p>
+            <p class="text-xl font-extrabold text-agri-900 mt-1">Rp 530,1 jt</p>
+            <p class="text-[10.5px] text-emerald-700 font-semibold mt-0.5">▲ 12,4% vs periode lalu</p>
+          </div>
+          <div class="rounded-xl bg-white border border-slate-200 p-3">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Transaksi</p>
+            <p class="text-xl font-extrabold text-agri-900 mt-1">550</p>
+            <p class="text-[10.5px] text-slate-500 mt-0.5">Rp 964 rb / transaksi</p>
+          </div>
+          <div class="rounded-xl bg-white border border-slate-200 p-3">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Laba Bersih</p>
+            <p class="text-xl font-extrabold text-agri-900 mt-1">Rp 97,3 jt</p>
+            <p class="text-[10.5px] text-slate-500 mt-0.5">Margin 18,4%</p>
+          </div>
+          <div class="rounded-xl bg-white border border-slate-200 p-3">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Stok Kritis</p>
+            <p class="text-xl font-extrabold text-rose-600 mt-1">3 SKU</p>
+            <p class="text-[10.5px] text-slate-500 mt-0.5">Perlu restock segera</p>
+          </div>
+        </div>
+        <div class="mt-3 rounded-xl bg-agri-950 p-3 flex items-start gap-2.5">
+          <div class="w-7 h-7 rounded-lg bg-agri-500 flex items-center justify-center flex-shrink-0">
+            <i data-lucide="brain-circuit" class="w-4 h-4 text-white"></i>
+          </div>
+          <p class="text-[11px] text-agri-100 leading-snug">
+            <b class="text-white">AI Insight:</b> Penjualan benih naik 18% — amankan stok 2 minggu ke depan dan bundling dengan pupuk NPK.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODUL -->
+  <section class="max-w-6xl mx-auto px-5 pb-16">
+    <div class="flex items-end justify-between gap-4 mb-5">
+      <div>
+        <h2 class="text-xl font-extrabold text-agri-950">Modul dalam ekosistem</h2>
+        <p class="text-[12.5px] text-slate-500 mt-1">Buka modul mana pun, data saling terhubung di browser yang sama.</p>
+      </div>
+      <span class="badge bg-slate-100 text-slate-600 hidden sm:inline-flex">3 modul aktif</span>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-4">
+      <a href="/erp/" class="card p-5 flex flex-col group">
+        <div class="flex items-center justify-between">
+          <div class="w-11 h-11 rounded-xl bg-agri-100 text-agri-700 flex items-center justify-center"><i data-lucide="layout-dashboard" class="w-5 h-5"></i></div>
+          <span class="badge bg-agri-50 text-agri-700 border border-agri-200">Utama</span>
+        </div>
+        <h3 class="font-extrabold text-agri-950 mt-4">AgriERP</h3>
+        <p class="text-[12px] text-slate-600 mt-1.5 leading-relaxed flex-1">
+          Dashboard penjualan, stok, dan laporan keuangan per hari/bulan/tahun, plus AI insight &amp; roadmap strategi.
+        </p>
+        <span class="mt-4 text-[11.5px] font-bold text-agri-700 flex items-center gap-1 group-hover:gap-2 transition-all">
+          Buka dashboard <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        </span>
+      </a>
+
+      <a href="/kasir/" class="card p-5 flex flex-col group">
+        <div class="flex items-center justify-between">
+          <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><i data-lucide="monitor-smartphone" class="w-5 h-5"></i></div>
+          <span class="badge bg-blue-50 text-blue-700 border border-blue-200">POS</span>
+        </div>
+        <h3 class="font-extrabold text-agri-950 mt-4">AgriPOS</h3>
+        <p class="text-[12px] text-slate-600 mt-1.5 leading-relaxed flex-1">
+          Kasir katalog visual, scan barcode, keranjang, pembayaran tunai/QRIS/kartu, dan struk digital.
+        </p>
+        <span class="mt-4 text-[11.5px] font-bold text-agri-700 flex items-center gap-1 group-hover:gap-2 transition-all">
+          Buka kasir <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        </span>
+      </a>
+
+      <a href="/gudang/" class="card p-5 flex flex-col group">
+        <div class="flex items-center justify-between">
+          <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><i data-lucide="warehouse" class="w-5 h-5"></i></div>
+          <span class="badge bg-amber-50 text-amber-700 border border-amber-200">WMS</span>
+        </div>
+        <h3 class="font-extrabold text-agri-950 mt-4">AgriStock</h3>
+        <p class="text-[12px] text-slate-600 mt-1.5 leading-relaxed flex-1">
+          Stok gudang &amp; rak, penerimaan barang, penyesuaian, alert batas minimum, dan sinkronisasi ke kasir.
+        </p>
+        <span class="mt-4 text-[11.5px] font-bold text-agri-700 flex items-center gap-1 group-hover:gap-2 transition-all">
+          Buka gudang <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        </span>
+      </a>
+    </div>
+
+    <div class="mt-6 rounded-2xl border border-agri-200 bg-agri-50/70 p-4 flex items-start gap-3">
+      <i data-lucide="info" class="w-4 h-4 text-agri-700 flex-shrink-0 mt-0.5"></i>
+      <p class="text-[11.5px] text-slate-600 leading-relaxed">
+        <b class="text-agri-900">Catatan demo:</b> aplikasi berjalan sepenuhnya di browser (static site). Data transaksi contoh dibuat otomatis dan disimpan di <span class="font-mono text-agri-800">localStorage</span> perangkat Anda — tidak dikirim ke server.
+        Sinkronisasi kasir ↔ gudang ↔ ERP aktif jika modul dibuka pada browser yang sama.
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="border-t border-slate-200 bg-white/80">
+  <div class="max-w-6xl mx-auto px-5 py-5 flex flex-wrap items-center justify-between gap-2 text-[11.5px] text-slate-500">
+    <span>© 2026 AgriSuite — Toko Saprotan &amp; Hasil Tani Sejahtera.</span>
+    <span class="font-mono">Static site · Cloudflare Pages</span>
+  </div>
+</footer>
+
+<script>
+  if (window.lucide) window.lucide.createIcons();
+</script>
+</body>
+</html>
