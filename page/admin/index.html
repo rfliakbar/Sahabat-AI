@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Kelola Toko | AgriSuite</title>
+<meta name="robots" content="noindex,nofollow">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: {
+      fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], mono: ['"JetBrains Mono"', 'monospace'] },
+      colors: { agri: { 50:'#f2fbf5',100:'#e1f7e8',200:'#c4edd2',300:'#96deaf',400:'#5fc684',500:'#38ab63',600:'#278b4d',700:'#216e3f',800:'#1e5835',900:'#1a482d',950:'#0d2718' } }
+    } }
+  };
+</script>
+<style>
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-thumb{background:#96deaf;border-radius:9999px}
+  .agri-pattern{background-color:#f8faf9;background-image:radial-gradient(#278b4d12 1px,transparent 1px);background-size:22px 22px}
+  .card{background:#fff;border:1px solid rgb(226 232 240/.9);border-radius:1rem;box-shadow:0 1px 2px rgb(15 23 42/.04)}
+  .badge{display:inline-flex;align-items:center;gap:.3rem;font-size:.6875rem;font-weight:700;padding:.2rem .55rem;border-radius:9999px}
+  .tabbtn{display:flex;align-items:center;gap:.55rem;padding:.6rem .85rem;border-radius:.7rem;font-size:.8rem;font-weight:700;color:#475569;transition:all .15s}
+  .tabbtn:hover{background:#f1f5f9}
+  .tabbtn.on{background:#216e3f;color:#fff;box-shadow:0 8px 20px -12px rgb(13 39 24/.6)}
+  .hide{display:none !important}
+  .modal-in{animation:pop .18s ease-out}
+  @keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body class="agri-pattern font-sans text-slate-800 antialiased min-h-screen">
+
+<!-- ================= LOGIN ================= -->
+<section id="loginView" class="min-h-screen flex items-center justify-center p-5">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-6">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-agri-950 flex items-center justify-center shadow-lg shadow-agri-900/25">
+        <i data-lucide="shield-check" class="w-7 h-7 text-agri-300"></i>
+      </div>
+      <h1 class="mt-4 text-xl font-extrabold text-agri-950">Portal Admin</h1>
+      <p class="text-[12.5px] text-slate-500 mt-1">Kelola pesanan, produk, dan pelanggan Toko Tani.</p>
+    </div>
+
+    <form id="loginForm" class="card p-5 space-y-3">
+      <label class="block">
+        <span class="text-[11.5px] font-bold text-slate-600">Username</span>
+        <input name="username" required autocomplete="username" value="admin"
+          class="mt-1 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-agri-300 focus:border-agri-400">
+      </label>
+      <label class="block">
+        <span class="text-[11.5px] font-bold text-slate-600">Password</span>
+        <div class="relative mt-1">
+          <input name="password" id="password" type="password" required autocomplete="current-password"
+            class="w-full px-3 py-2.5 pr-10 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-agri-300 focus:border-agri-400">
+          <button type="button" id="togglePw" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-slate-100">
+            <i data-lucide="eye" class="w-4 h-4 text-slate-400"></i>
+          </button>
+        </div>
+      </label>
+      <p id="loginError" class="hide text-[12px] font-semibold text-rose-600"></p>
+      <button class="w-full py-3 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-sm font-extrabold transition flex items-center justify-center gap-2">
+        <i data-lucide="log-in" class="w-4 h-4"></i> Masuk
+      </button>
+      <div class="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5 text-[11px] text-amber-800 leading-relaxed">
+        <b>Akun demo:</b> username <span class="font-mono font-bold">admin</span> · password <span class="font-mono font-bold">admin123</span>
+      </div>
+      <a href="/customer/" class="block text-center text-[12px] font-bold text-agri-700 hover:text-agri-800 pt-1">← Kembali ke toko</a>
+    </form>
+  </div>
+</section>
+
+<!-- ================= DASHBOARD ================= -->
+<div id="adminView" class="hide min-h-screen flex flex-col">
+  <header class="bg-agri-950 text-white sticky top-0 z-40 shadow-lg shadow-agri-950/20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-5 py-3 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-agri-400 to-agri-600 flex items-center justify-center">
+          <i data-lucide="sprout" class="w-5 h-5 text-white"></i>
+        </div>
+        <div>
+          <p class="font-extrabold text-sm leading-none">Agri<span class="text-agri-300">Suite</span> Admin</p>
+          <p class="text-[10px] text-agri-300 mt-1 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Sesi aktif</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="/customer/" class="hidden sm:inline-flex px-3 py-2 rounded-lg border border-agri-700 text-agri-100 hover:bg-agri-800 text-[12px] font-bold items-center gap-1.5 transition">
+          <i data-lucide="store" class="w-3.5 h-3.5"></i> Toko
+        </a>
+        <button id="logoutBtn" class="px-3 py-2 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-200 text-[12px] font-bold flex items-center gap-1.5 transition">
+          <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Keluar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-7xl w-full mx-auto px-4 sm:px-5 py-5 flex-1 grid lg:grid-cols-[220px_1fr] gap-5 items-start">
+    <!-- SIDEBAR -->
+    <nav class="card p-2 flex lg:flex-col gap-1 overflow-x-auto">
+      <button data-tab="ringkasan" class="tabbtn on flex-shrink-0"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> Ringkasan</button>
+      <button data-tab="pesanan" class="tabbtn flex-shrink-0"><i data-lucide="receipt-text" class="w-4 h-4"></i> Pesanan <span id="navOrders" class="ml-1 text-[10px] font-extrabold bg-amber-400 text-amber-950 rounded-full px-1.5">0</span></button>
+      <button data-tab="produk" class="tabbtn flex-shrink-0"><i data-lucide="package" class="w-4 h-4"></i> Produk</button>
+      <button data-tab="pelanggan" class="tabbtn flex-shrink-0"><i data-lucide="users" class="w-4 h-4"></i> Pelanggan</button>
+      <div class="hidden lg:block border-t border-slate-100 my-1"></div>
+      <button id="resetBtn" class="tabbtn flex-shrink-0 text-rose-600 hover:bg-rose-50"><i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reset demo</button>
+    </nav>
+
+    <main>
+      <!-- RINGKASAN -->
+      <section id="tab-ringkasan" class="space-y-5">
+        <div class="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h1 class="text-xl font-extrabold text-agri-950">Ringkasan toko</h1>
+            <p class="text-[12.5px] text-slate-500 mt-1" id="todayLabel"></p>
+          </div>
+          <span class="badge bg-agri-50 text-agri-700 border border-agri-200"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Data lokal · real-time</span>
+        </div>
+
+        <div class="grid grid-cols-2 xl:grid-cols-4 gap-3">
+          <div class="card p-4">
+            <p class="text-[10.5px] font-bold uppercase tracking-wider text-slate-500">Omzet (valid)</p>
+            <p id="kRevenue" class="text-xl font-extrabold text-agri-900 mt-1">Rp 0</p>
+            <p class="text-[10.5px] text-slate-500 mt-0.5">Tanpa pesanan batal</p>
+          </div>
+          <div class="card p-4">
+            <p class="text-[10.5px] font-bold uppercase tracking-wider text-slate-500">Pesanan baru</p>
+            <p id="kNew" class="text-xl font-extrabold text-amber-600 mt-1">0</p>
+            <p class="text-[10.5px] text-slate-500 mt-0.5">Perlu diproses</p>
+          </div>
+          <div class="card p-4">
+            <p class="text-[10.5px] font-bold uppercase tracking-wider text-slate-500">Omzet hari ini</p>
+            <p id="kToday" class="text-xl font-extrabold text-agri-900 mt-1">Rp 0</p>
+            <p id="kTodayCount" class="text-[10.5px] text-slate-500 mt-0.5">0 pesanan</p>
+          </div>
+          <div class="card p-4">
+            <p class="text-[10.5px] font-bold uppercase tracking-wider text-slate-500">Stok menipis</p>
+            <p id="kLow" class="text-xl font-extrabold text-rose-600 mt-1">0 SKU</p>
+            <p class="text-[10.5px] text-slate-500 mt-0.5">≤ 10 unit tersisa</p>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="card p-4">
+            <div class="flex items-center justify-between">
+              <h2 class="text-[13px] font-extrabold text-agri-950">Omzet 7 hari terakhir</h2>
+              <span class="badge bg-slate-100 text-slate-600">Harian</span>
+            </div>
+            <div id="chart7" class="mt-4 flex items-end gap-2 h-40"></div>
+          </div>
+          <div class="card p-4">
+            <div class="flex items-center justify-between">
+              <h2 class="text-[13px] font-extrabold text-agri-950">Perlu perhatian</h2>
+              <span class="badge bg-rose-50 text-rose-700 border border-rose-200">Stok</span>
+            </div>
+            <div id="lowList" class="mt-3 space-y-2"></div>
+          </div>
+        </div>
+
+        <div class="card overflow-hidden">
+          <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+            <h2 class="text-[13px] font-extrabold text-agri-950">Pesanan terbaru</h2>
+            <button data-goto="pesanan" class="text-[11.5px] font-bold text-agri-700 hover:text-agri-800">Lihat semua →</button>
+          </div>
+          <div id="recentOrders" class="divide-y divide-slate-100"></div>
+        </div>
+      </section>
+
+      <!-- PESANAN -->
+      <section id="tab-pesanan" class="hide space-y-4">
+        <div class="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 class="text-xl font-extrabold text-agri-950">Pesanan</h1>
+            <p class="text-[12.5px] text-slate-500 mt-1">Ubah status untuk memproses pesanan customer.</p>
+          </div>
+          <div class="flex gap-2">
+            <select id="orderFilter" class="px-3 py-2 rounded-xl border border-slate-200 text-[12.5px] font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-agri-300">
+              <option value="all">Semua status</option>
+              <option value="baru">Baru</option>
+              <option value="diproses">Diproses</option>
+              <option value="dikirim">Dikirim</option>
+              <option value="selesai">Selesai</option>
+              <option value="batal">Dibatalkan</option>
+            </select>
+            <input id="orderSearch" placeholder="Cari kode / nama…" class="px-3 py-2 rounded-xl border border-slate-200 text-[12.5px] bg-white focus:outline-none focus:ring-2 focus:ring-agri-300 w-40 sm:w-52">
+          </div>
+        </div>
+        <div id="orderList" class="space-y-3"></div>
+      </section>
+
+      <!-- PRODUK -->
+      <section id="tab-produk" class="hide space-y-4">
+        <div class="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 class="text-xl font-extrabold text-agri-950">Produk &amp; stok</h1>
+            <p class="text-[12.5px] text-slate-500 mt-1">Harga dan stok langsung tampil di halaman customer.</p>
+          </div>
+          <button id="addProductBtn" class="px-4 py-2.5 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-[12.5px] font-extrabold flex items-center gap-1.5 transition">
+            <i data-lucide="plus" class="w-4 h-4"></i> Produk baru
+          </button>
+        </div>
+        <div class="card overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead class="bg-slate-50 text-[10.5px] uppercase tracking-wider text-slate-500">
+                <tr>
+                  <th class="px-4 py-2.5 font-bold">Produk</th>
+                  <th class="px-3 py-2.5 font-bold">Kategori</th>
+                  <th class="px-3 py-2.5 font-bold text-right">Harga</th>
+                  <th class="px-3 py-2.5 font-bold text-right">Stok</th>
+                  <th class="px-3 py-2.5 font-bold text-center">Status</th>
+                  <th class="px-4 py-2.5 font-bold text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="productRows" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- PELANGGAN -->
+      <section id="tab-pelanggan" class="hide space-y-4">
+        <div>
+          <h1 class="text-xl font-extrabold text-agri-950">Pelanggan</h1>
+          <p class="text-[12.5px] text-slate-500 mt-1">Dikelompokkan dari nomor HP pesanan.</p>
+        </div>
+        <div id="customerList" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3"></div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="border-t border-slate-200 bg-white/80">
+    <div class="max-w-7xl mx-auto px-5 py-3 text-[11px] text-slate-500 flex flex-wrap justify-between gap-2">
+      <span>© 2026 AgriSuite Admin · Data demo tersimpan di browser</span>
+      <span class="font-mono">Halaman admin</span>
+    </div>
+  </footer>
+</div>
+
+<!-- MODAL PRODUK -->
+<div id="productModal" class="hide fixed inset-0 bg-agri-950/50 backdrop-blur-[2px] z-[60] overflow-y-auto">
+  <div class="min-h-full flex items-start sm:items-center justify-center p-4">
+    <form id="productForm" class="modal-in bg-white w-full max-w-lg rounded-2xl shadow-2xl p-5 sm:p-6 space-y-3">
+      <div class="flex items-start justify-between">
+        <div>
+          <h3 id="productModalTitle" class="font-extrabold text-agri-950 text-lg">Produk baru</h3>
+          <p class="text-[12px] text-slate-500 mt-0.5">Perubahan langsung terlihat di toko customer.</p>
+        </div>
+        <button type="button" id="closeProduct" class="p-2 rounded-lg hover:bg-slate-100"><i data-lucide="x" class="w-5 h-5 text-slate-500"></i></button>
+      </div>
+      <input type="hidden" name="id">
+      <label class="block">
+        <span class="text-[11.5px] font-bold text-slate-600">Nama produk *</span>
+        <input name="name" required class="mt-1 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-agri-300">
+      </label>
+      <div class="grid sm:grid-cols-2 gap-3">
+        <label class="block">
+          <span class="text-[11.5px] font-bold text-slate-600">SKU</span>
+          <input name="sku" class="mt-1 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-agri-300">
+        </label>
+        <label class="block">
+          <span class="text-[11.5px] font-bold text-slate-600">Kategori</span>
+          <select name="category" class="mt-1 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-agri-300">
+            <option>Benih</option><option>Pupuk</option><option>Pestisida</option><option>Alat Pertanian</option><option>Hasil Tani</option><option>Lainnya</option>
+          </select>
+        </label>
+        <label class="block">
+          <span class="text-[11.5px] font-bold text-slate-600">Harga (Rp) *</span>
+          <input name="price" type="number" min="0" required class="mt-1 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-agri-300">
+        </label>
+        <label class="block">
+          <span class="text-[11.5px] font-bold text-slate-600">Stok *</span>
+          <input name="stock" type="number" min="0" required class="mt-1 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-agri-300">
+        </label>
+        <label class="block">
+          <span class="text-[11.5px] font-bold text-slate-600">Satuan</span>
+          <input name="unit" placeholder="karung / botol / unit" class="mt-1 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-agri-300">
+        </label>
+        <label class="block">
+          <span class="text-[11.5px] font-bold text-slate-600">URL gambar</span>
+          <input name="image" placeholder="https://…" class="mt-1 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-agri-300">
+        </label>
+      </div>
+      <button class="w-full py-3 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-sm font-extrabold transition">Simpan produk</button>
+    </form>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="hide fixed bottom-5 left-1/2 -translate-x-1/2 z-[80] bg-agri-950 text-white text-[12.5px] font-semibold px-4 py-2.5 rounded-xl shadow-xl"></div>
+
+<script src="/page/shop/store.js"></script>
+<script>
+(function () {
+  const S = window.AgriShop;
+  const $ = (id) => document.getElementById(id);
+  const icons = () => window.lucide && window.lucide.createIcons();
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const dt = (iso) => new Date(iso).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+  function toast(msg, bad) {
+    const el = $('toast');
+    el.textContent = msg;
+    el.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 z-[80] text-white text-[12.5px] font-semibold px-4 py-2.5 rounded-xl shadow-xl ' + (bad ? 'bg-rose-600' : 'bg-agri-950');
+    el.classList.remove('hide');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => el.classList.add('hide'), 2400);
+  }
+
+  /* ---------- auth ---------- */
+  function showAdmin(show) {
+    $('loginView').classList.toggle('hide', show);
+    $('adminView').classList.toggle('hide', !show);
+    if (show) { renderAll(); }
+    icons();
+  }
+
+  $('loginForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    if (S.login(f.get('username'), f.get('password'))) {
+      $('loginError').classList.add('hide');
+      showAdmin(true);
+    } else {
+      const err = $('loginError');
+      err.textContent = 'Username atau password salah. Gunakan akun demo: admin / admin123.';
+      err.classList.remove('hide');
+    }
+  });
+  $('togglePw').onclick = () => {
+    const p = $('password');
+    p.type = p.type === 'password' ? 'text' : 'password';
+    icons();
+  };
+  $('logoutBtn').onclick = () => { S.logout(); showAdmin(false); };
+
+  /* ---------- tabs ---------- */
+  function switchTab(name) {
+    document.querySelectorAll('[data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === name));
+    ['ringkasan', 'pesanan', 'produk', 'pelanggan'].forEach((t) => $('tab-' + t).classList.toggle('hide', t !== name));
+    icons();
+  }
+  document.querySelectorAll('[data-tab]').forEach((b) => b.onclick = () => switchTab(b.dataset.tab));
+  document.querySelectorAll('[data-goto]').forEach((b) => b.onclick = () => switchTab(b.dataset.goto));
+
+  /* ---------- ringkasan ---------- */
+  function orderBadge(status) {
+    const m = S.STATUS_META[status] || { label: status, cls: 'bg-slate-100 text-slate-600 border-slate-200' };
+    return `<span class="badge border ${m.cls}">${m.label}</span>`;
+  }
+
+  function renderRingkasan() {
+    const d = S.load();
+    const st = S.stats(d);
+    $('kRevenue').textContent = S.rupiah(st.revenue);
+    $('kNew').textContent = st.baru;
+    $('kToday').textContent = S.rupiah(st.todayRevenue);
+    $('kTodayCount').textContent = `${st.todayCount} pesanan hari ini`;
+    $('kLow').textContent = `${st.lowStock.length} SKU`;
+    $('navOrders').textContent = st.baru;
+    $('todayLabel').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+    // chart 7 hari
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d0 = new Date(); d0.setHours(0, 0, 0, 0); d0.setDate(d0.getDate() - i);
+      const d1 = new Date(d0); d1.setDate(d1.getDate() + 1);
+      const sum = d.orders.filter((o) => o.status !== 'batal' && new Date(o.createdAt) >= d0 && new Date(o.createdAt) < d1)
+        .reduce((s, o) => s + o.total, 0);
+      days.push({ label: d0.toLocaleDateString('id-ID', { weekday: 'short' }), sum });
+    }
+    const max = Math.max(1, ...days.map((x) => x.sum));
+    $('chart7').innerHTML = days.map((x) => `
+      <div class="flex-1 flex flex-col items-center justify-end gap-1.5 h-full">
+        <span class="text-[9.5px] font-bold text-slate-500">${x.sum ? S.rupiah(x.sum).replace('Rp ', '') : '–'}</span>
+        <div class="w-full rounded-t-lg ${x.sum ? 'bg-agri-500 hover:bg-agri-600' : 'bg-slate-100'} transition-colors" style="height:${Math.max(6, Math.round((x.sum / max) * 100))}%"></div>
+        <span class="text-[9.5px] font-bold text-slate-400">${x.label}</span>
+      </div>`).join('');
+
+    $('lowList').innerHTML = st.lowStock.length ? st.lowStock.slice(0, 6).map((p) => `
+      <div class="flex items-center gap-2.5 rounded-xl border border-rose-100 bg-rose-50/60 px-3 py-2">
+        <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-500 flex-shrink-0"></i>
+        <div class="min-w-0 flex-1">
+          <p class="text-[11.5px] font-bold text-agri-950 truncate">${esc(p.name)}</p>
+          <p class="text-[10.5px] text-rose-600 font-semibold">Sisa ${p.stock} ${esc(p.unit)}</p>
+        </div>
+      </div>`).join('') : `<p class="text-[12px] text-slate-500 py-6 text-center">Semua stok aman 👍</p>`;
+
+    $('recentOrders').innerHTML = d.orders.slice(0, 5).map((o) => `
+      <div class="px-4 py-2.5 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-agri-50 border border-agri-100 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="receipt" class="w-4 h-4 text-agri-700"></i>
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="text-[12px] font-bold text-agri-950 truncate">${esc(o.customer.name)}</p>
+          <p class="text-[10.5px] text-slate-500 font-mono">${o.code} · ${dt(o.createdAt)}</p>
+        </div>
+        <span class="text-[12px] font-extrabold text-agri-900 hidden sm:block">${S.rupiah(o.total)}</span>
+        ${orderBadge(o.status)}
+      </div>`).join('') || `<p class="px-4 py-6 text-[12px] text-slate-500 text-center">Belum ada pesanan.</p>`;
+    icons();
+  }
+
+  /* ---------- pesanan ---------- */
+  function filteredOrders() {
+    const f = $('orderFilter').value;
+    const q = $('orderSearch').value.toLowerCase().trim();
+    return S.load().orders
+      .filter((o) => f === 'all' || o.status === f)
+      .filter((o) => !q || (o.code + ' ' + o.customer.name + ' ' + o.customer.phone).toLowerCase().includes(q));
+  }
+
+  function renderOrders() {
+    const list = filteredOrders();
+    $('orderList').innerHTML = list.length ? list.map((o) => `
+      <article class="card p-4">
+        <div class="flex flex-wrap items-start justify-between gap-2">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <p class="font-mono text-[11.5px] font-bold text-agri-800">${o.code}</p>
+              ${orderBadge(o.status)}
+            </div>
+            <p class="mt-1.5 text-[13px] font-extrabold text-agri-950">${esc(o.customer.name)}</p>
+            <p class="text-[11.5px] text-slate-500">${esc(o.customer.phone)} · ${dt(o.createdAt)}</p>
+            <p class="text-[11.5px] text-slate-500 mt-0.5">${esc(o.customer.address)}</p>
+            ${o.note ? `<p class="text-[11.5px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1 mt-1.5 inline-block">Catatan: ${esc(o.note)}</p>` : ''}
+          </div>
+          <div class="text-right">
+            <p class="text-[15px] font-extrabold text-agri-900">${S.rupiah(o.total)}</p>
+            <p class="text-[10.5px] font-semibold text-slate-500 uppercase tracking-wider">${o.payment === 'cod' ? 'Bayar di tempat' : 'Transfer'}</p>
+          </div>
+        </div>
+        <div class="mt-3 border-t border-slate-100 pt-2.5 flex flex-wrap gap-x-4 gap-y-1">
+          ${o.items.map((l) => `<span class="text-[11.5px] text-slate-600">${esc(l.name)} <b>×${l.qty}</b></span>`).join('')}
+        </div>
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+          ${['diproses', 'dikirim', 'selesai'].map((s) => `
+            <button data-status="${o.id}" data-s="${s}" ${o.status === s || o.status === 'batal' ? 'disabled' : ''}
+              class="px-2.5 py-1.5 rounded-lg text-[11px] font-extrabold border transition
+              ${o.status === s || o.status === 'batal' ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white border-slate-200 hover:border-agri-300 hover:bg-agri-50 text-agri-800'}">
+              ${S.STATUS_META[s].label}</button>`).join('')}
+          <button data-status="${o.id}" data-s="batal" ${o.status === 'batal' || o.status === 'selesai' ? 'disabled' : ''}
+            class="ml-auto px-2.5 py-1.5 rounded-lg text-[11px] font-extrabold border transition
+            ${o.status === 'batal' || o.status === 'selesai' ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white border-rose-200 text-rose-600 hover:bg-rose-50'}">
+            Batalkan</button>
+        </div>
+      </article>`).join('') : `<div class="card px-4 py-12 text-center">
+        <i data-lucide="inbox" class="w-9 h-9 text-slate-300 mx-auto"></i>
+        <p class="mt-2 text-sm font-bold text-slate-500">Tidak ada pesanan pada filter ini</p>
+      </div>`;
+
+    $('orderList').querySelectorAll('[data-status]').forEach((b) => b.onclick = () => {
+      S.updateOrderStatus(b.dataset.status, b.dataset.s);
+      toast('Status pesanan diperbarui');
+      renderAll();
+    });
+    icons();
+  }
+
+  /* ---------- produk ---------- */
+  function renderProducts() {
+    $('productRows').innerHTML = S.load().products.map((p) => `
+      <tr class="hover:bg-slate-50/70">
+        <td class="px-4 py-2.5">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <img src="${p.image}" alt="" class="w-9 h-9 rounded-lg object-cover bg-slate-100 flex-shrink-0">
+            <div class="min-w-0">
+              <p class="text-[12px] font-bold text-agri-950 truncate max-w-[230px]">${esc(p.name)}</p>
+              <p class="text-[10px] font-mono text-slate-400">${esc(p.sku)}</p>
+            </div>
+          </div>
+        </td>
+        <td class="px-3 py-2.5 text-[11.5px] text-slate-600">${esc(p.category)}</td>
+        <td class="px-3 py-2.5 text-[11.5px] font-bold text-agri-900 text-right whitespace-nowrap">${S.rupiah(p.price)}</td>
+        <td class="px-3 py-2.5 text-right">
+          <span class="text-[12px] font-extrabold ${p.stock <= 10 ? 'text-rose-600' : 'text-agri-900'}">${p.stock}</span>
+          <span class="text-[10px] text-slate-400">${esc(p.unit)}</span>
+        </td>
+        <td class="px-3 py-2.5 text-center">
+          ${p.active ? '<span class="badge bg-emerald-50 text-emerald-700 border border-emerald-200">Aktif</span>'
+                     : '<span class="badge bg-slate-100 text-slate-500 border border-slate-200">Nonaktif</span>'}
+        </td>
+        <td class="px-4 py-2.5">
+          <div class="flex items-center justify-end gap-1">
+            <button data-edit="${p.id}" class="p-1.5 rounded-lg hover:bg-agri-50 text-agri-700" title="Edit"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+            <button data-toggle="${p.id}" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500" title="${p.active ? 'Nonaktifkan' : 'Aktifkan'}">
+              <i data-lucide="${p.active ? 'eye-off' : 'eye'}" class="w-3.5 h-3.5"></i></button>
+          </div>
+        </td>
+      </tr>`).join('');
+
+    $('productRows').querySelectorAll('[data-edit]').forEach((b) => b.onclick = () => openProduct(b.dataset.edit));
+    $('productRows').querySelectorAll('[data-toggle]').forEach((b) => b.onclick = () => {
+      const p = S.load().products.find((x) => x.id === b.dataset.toggle);
+      S.toggleProduct(p.id, !p.active);
+      toast(p.active ? 'Produk disembunyikan dari toko' : 'Produk ditampilkan di toko');
+      renderAll();
+    });
+    icons();
+  }
+
+  function openProduct(id) {
+    const f = $('productForm');
+    f.reset();
+    const p = id ? S.load().products.find((x) => x.id === id) : null;
+    $('productModalTitle').textContent = p ? 'Edit produk' : 'Produk baru';
+    f.id.value = p ? p.id : '';
+    if (p) {
+      f.name.value = p.name; f.sku.value = p.sku; f.category.value = p.category;
+      f.price.value = p.price; f.stock.value = p.stock; f.unit.value = p.unit; f.image.value = p.image;
+    }
+    $('productModal').classList.remove('hide');
+    icons();
+    setTimeout(() => f.name.focus(), 50);
+  }
+
+  $('addProductBtn').onclick = () => openProduct(null);
+  $('closeProduct').onclick = () => $('productModal').classList.add('hide');
+  $('productModal').addEventListener('click', (e) => { if (e.target === $('productModal')) $('productModal').classList.add('hide'); });
+  $('productForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    S.upsertProduct({
+      id: f.get('id') || undefined,
+      name: f.get('name'), sku: f.get('sku'), category: f.get('category'),
+      price: Number(f.get('price')), stock: Number(f.get('stock')),
+      unit: f.get('unit') || 'unit', image: f.get('image') || ''
+    });
+    $('productModal').classList.add('hide');
+    toast('Produk disimpan');
+    renderAll();
+  });
+
+  /* ---------- pelanggan ---------- */
+  function renderCustomers() {
+    const d = S.load();
+    const map = new Map();
+    d.orders.forEach((o) => {
+      const key = o.customer.phone || o.customer.name;
+      const cur = map.get(key) || { name: o.customer.name, phone: o.customer.phone, address: o.customer.address, count: 0, total: 0, last: o.createdAt };
+      cur.count += 1;
+      if (o.status !== 'batal') cur.total += o.total;
+      if (new Date(o.createdAt) > new Date(cur.last)) cur.last = o.createdAt;
+      map.set(key, cur);
+    });
+    const list = [...map.values()].sort((a, b) => b.total - a.total);
+    $('customerList').innerHTML = list.length ? list.map((c) => `
+      <div class="card p-4">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-full bg-agri-100 border border-agri-200 flex items-center justify-center font-extrabold text-agri-800 flex-shrink-0">
+            ${esc((c.name || '?').trim().charAt(0).toUpperCase())}
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-[13px] font-extrabold text-agri-950 truncate">${esc(c.name)}</p>
+            <p class="text-[11px] text-slate-500">${esc(c.phone || '-')}</p>
+            <p class="text-[11px] text-slate-400 mt-0.5 truncate">${esc(c.address || '-')}</p>
+          </div>
+        </div>
+        <div class="mt-3 grid grid-cols-3 gap-2 border-t border-slate-100 pt-2.5 text-center">
+          <div><p class="text-[13px] font-extrabold text-agri-900">${c.count}</p><p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Pesanan</p></div>
+          <div><p class="text-[13px] font-extrabold text-agri-900">${S.rupiah(c.total).replace('Rp ', '')}</p><p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Belanja</p></div>
+          <div><p class="text-[13px] font-extrabold text-agri-900">${dt(c.last).split(',')[0]}</p><p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Terakhir</p></div>
+        </div>
+      </div>`).join('') : `<p class="text-[12.5px] text-slate-500 py-10 text-center sm:col-span-2 xl:col-span-3">Belum ada pelanggan.</p>`;
+    icons();
+  }
+
+  /* ---------- global ---------- */
+  function renderAll() {
+    const d = S.load();
+    const st = S.stats(d);
+    $('navOrders').textContent = st.baru;
+    renderRingkasan(); renderOrders(); renderProducts(); renderCustomers();
+  }
+
+  $('orderFilter').onchange = renderOrders;
+  $('orderSearch').oninput = renderOrders;
+  $('resetBtn').onclick = () => {
+    if (confirm('Reset semua data demo (produk & pesanan) ke kondisi awal?')) {
+      S.resetDemo(); toast('Data demo direset'); renderAll();
+    }
+  };
+
+  S.onChange(() => { if (S.isLoggedIn()) renderAll(); });
+
+  showAdmin(S.isLoggedIn());
+  icons();
+})();
+</script>
+</body>
+</html>
