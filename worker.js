@@ -10,7 +10,8 @@ import { DurableObject } from "cloudflare:workers";
 
 const COOKIE_NAME = "sa_session";
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000; // 12 jam
-const PBKDF2_ITERATIONS = 210000;
+// Cloudflare Workers WebCrypto membatasi PBKDF2 maksimal 100.000 iterasi.
+const PBKDF2_ITERATIONS = 100000;
 const AUTH_OBJECT_NAME = "sahabat-ai-auth";
 
 const ROLE_LANDING = {
@@ -86,7 +87,7 @@ async function verifyPassword(password, stored) {
   const parts = String(stored || "").split("$");
   if (parts.length !== 4 || parts[0] !== "pbkdf2-sha256") return false;
   const iterations = Number(parts[1]);
-  if (!Number.isSafeInteger(iterations) || iterations < 100000) return false;
+  if (!Number.isSafeInteger(iterations) || iterations !== 100000) return false;
   let salt;
   try {
     salt = base64ToBytes(parts[2]);
@@ -573,9 +574,8 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    try {
     if (url.pathname.startsWith("/api/")) {
-      return await handleApi(request, env, url);
+      return handleApi(request, env, url);
     }
 
     const internalPath = resolveInternalPath(url.pathname);
@@ -602,8 +602,5 @@ export default {
       assetRequest = new Request(assetUrl, request);
     }
     return env.ASSETS.fetch(assetRequest);
-    } catch (err) {
-      return json({ error: "Worker exception", detail: String(err && err.stack || err) }, 500);
-    }
   },
 };

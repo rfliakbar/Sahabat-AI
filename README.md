@@ -24,7 +24,7 @@ Semua pengguna masuk lewat **`/login/`**. Pilih **Jenis akun** terlebih dahulu:
 | **Customer** | Daftar akun baru / email pribadi | `/customer/` | Katalog & pesanan toko |
 
 - **Backend sungguhan:** akun, sesi, dan log aktivitas disimpan di SQLite-backed **Durable Object** (`worker.js`), bukan `localStorage`.
-- Password di-hash dengan **PBKDF2-SHA256 (210.000 iterasi + salt acak 16 byte)**. Tidak ada password plain text di database maupun browser.
+- Password di-hash dengan **PBKDF2-SHA256 (100.000 iterasi + salt acak 16 byte, batas maksimal WebCrypto Cloudflare Workers)**. Tidak ada password plain text di database maupun browser.
 - Sesion memakai cookie `HttpOnly` + `SameSite=Lax` (`Secure` otomatis di HTTPS), berlaku 12 jam.
 - **RBAC ditegakkan di Worker**: sebelum halaman internal dikirim, peran dicek dari sesi di database. Menu yang tidak diizinkan juga disembunyikan di frontend.
 - Endpoint API: `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`, `/api/employees` (GET/POST/PATCH/DELETE, owner only), `/api/activity` (owner only).
