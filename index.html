@@ -68,14 +68,21 @@
       </div>
     </a>
 
-    <nav class="hidden sm:flex items-center gap-1 text-[12.5px] font-semibold">
-      <a href="#modul" class="px-3 py-2 rounded-lg text-agri-100 hover:bg-agri-800 hover:text-white transition">Modul</a>
-      <a href="/page/login/" class="px-3 py-2 rounded-lg text-agri-300 hover:bg-agri-800 hover:text-white transition">Masuk / Daftar</a>
+    <nav class="hidden md:flex items-center gap-1 text-[12.5px] font-semibold">
+      <a href="/page/erp/" class="px-3 py-2 rounded-lg text-agri-100 hover:bg-agri-800 hover:text-white transition">Dashboard ERP</a>
+      <a href="/page/kasir/" class="px-3 py-2 rounded-lg text-agri-100 hover:bg-agri-800 hover:text-white transition">Kasir</a>
+      <a href="/page/gudang/" class="px-3 py-2 rounded-lg text-agri-100 hover:bg-agri-800 hover:text-white transition">Gudang</a>
+      <a href="#modul" class="px-3 py-2 rounded-lg text-agri-200 hover:bg-agri-800 hover:text-white transition">Modul</a>
     </nav>
 
-    <a href="/page/login/" class="px-4 py-2 rounded-xl bg-agri-400 hover:bg-agri-300 text-agri-950 text-xs font-extrabold flex items-center gap-1.5 transition">
-      Masuk <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
-    </a>
+    <div class="flex items-center gap-2">
+      <a href="/page/login/" class="hidden sm:inline-flex px-3.5 py-2 rounded-xl border border-agri-400/40 hover:border-agri-300 text-agri-100 hover:text-white text-xs font-extrabold items-center gap-1.5 transition">
+        <i data-lucide="log-in" class="w-3.5 h-3.5"></i> Masuk
+      </a>
+      <a href="/page/erp/" class="px-4 py-2 rounded-xl bg-agri-400 hover:bg-agri-300 text-agri-950 text-xs font-extrabold flex items-center gap-1.5 transition">
+        Buka ERP <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+      </a>
+    </div>
   </div>
 </header>
 
@@ -100,8 +107,14 @@
         <a href="/page/login/" class="px-6 py-3.5 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-sm font-bold flex items-center gap-2 shadow-lg shadow-agri-700/25 transition">
           <i data-lucide="log-in" class="w-4 h-4"></i> Masuk / Daftar Akun
         </a>
-        <a href="#modul" class="px-5 py-3 rounded-xl bg-white border border-slate-200 hover:border-agri-300 hover:bg-agri-50 text-agri-900 text-sm font-bold flex items-center gap-2 transition">
-          <i data-lucide="layout-grid" class="w-4 h-4"></i> Lihat Modul
+        <a href="/page/erp/" class="px-5 py-3 rounded-xl bg-white border border-slate-200 hover:border-agri-300 hover:bg-agri-50 text-agri-900 text-sm font-bold flex items-center gap-2 transition">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Buka Dashboard ERP
+        </a>
+        <a href="/page/kasir/" class="px-5 py-3 rounded-xl bg-white border border-slate-200 hover:border-agri-300 hover:bg-agri-50 text-agri-900 text-sm font-bold flex items-center gap-2 transition">
+          <i data-lucide="monitor-smartphone" class="w-4 h-4"></i> Terminal Kasir
+        </a>
+        <a href="/page/gudang/" class="px-5 py-3 rounded-xl bg-white border border-slate-200 hover:border-agri-300 hover:bg-agri-50 text-agri-900 text-sm font-bold flex items-center gap-2 transition">
+          <i data-lucide="warehouse" class="w-4 h-4"></i> Gudang WMS
         </a>
       </div>
 
