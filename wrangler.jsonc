@@ -1,12 +1,33 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "sahabat-ai",
+  "main": "worker.js",
   "compatibility_date": "2026-11-24",
   "observability": {
     "enabled": true
   },
+  "exports": {
+    "AuthStore": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    }
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "AUTH_STORE",
+        "class_name": "AuthStore"
+      }
+    ]
+  },
+  "vars": {
+    "INITIAL_OWNER_EMAIL": "admin@tokotani.id",
+    "INITIAL_OWNER_NAME": "Pemilik Toko"
+  },
   "assets": {
     "directory": ".",
-    "not_found_handling": "404-page"
+    "not_found_handling": "404-page",
+    "binding": "ASSETS",
+    "run_worker_first": true
   }
 }

@@ -119,11 +119,18 @@
         <!-- LOGIN -->
         <form id="loginForm" class="mt-4 space-y-3">
           <label class="block">
+            <span class="text-[11.5px] font-bold text-slate-600">Jenis akun</span>
+            <select id="loginMode" class="field mt-1">
+              <option value="staff">Pemilik / Karyawan (ERP)</option>
+              <option value="customer">Customer (Toko)</option>
+            </select>
+          </label>
+          <label class="block">
             <span class="text-[11.5px] font-bold text-slate-600">Email</span>
             <input id="loginEmail" name="email" type="email" required autocomplete="email" placeholder="nama@email.com"
               class="field mt-1">
             <span class="text-[10.5px] text-slate-400 mt-1 flex items-center gap-1">
-              <i data-lucide="info" class="w-3 h-3"></i> Admin gunakan email khusus toko <span class="font-mono">admin@tokotani.id</span>
+              <i data-lucide="info" class="w-3 h-3"></i> Akun pemilik/karyawan dikelola di menu <span class="font-bold">Manajemen Karyawan</span> ERP
             </span>
           </label>
           <label class="block">
@@ -168,8 +175,8 @@
         </form>
 
         <div class="mt-4 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5 text-[11px] text-amber-900 leading-relaxed">
-          <b>Akun demo admin:</b> email <span class="font-mono font-bold">admin@tokotani.id</span> · password <span class="font-mono font-bold">admin123</span>.
-          Customer: daftar akun baru dengan email apa pun.
+          <b>Akun pemilik:</b> email <span class="font-mono font-bold">admin@tokotani.id</span> · password <span class="font-mono font-bold">admin123</span>.
+          Akun kasir/gudang dibuat pemilik lewat <b>Manajemen Karyawan</b>. Customer: daftar akun baru dengan email apa pun.
         </div>
 
         <a href="/" class="mt-3 block text-center text-[11.5px] font-bold text-slate-500 hover:text-agri-700">← Kembali ke beranda</a>
@@ -209,20 +216,19 @@
   $('tabLogin').onclick = () => tab('login');
   $('tabRegister').onclick = () => tab('register');
 
-  /* deteksi email admin */
+  /* deteksi jenis akun */
   function refreshRole() {
-    const email = ($('loginEmail').value || '').trim();
-    const admin = S.isAdminEmail(email);
+    const staff = $('loginMode').value === 'staff';
     const badge = $('roleBadge');
-    badge.innerHTML = admin
-      ? '<i data-lucide="shield-check" class="w-3 h-3"></i> Admin toko'
+    badge.innerHTML = staff
+      ? '<i data-lucide="shield-check" class="w-3 h-3"></i> Staff ERP'
       : '<i data-lucide="user-round" class="w-3 h-3"></i> Customer';
     badge.className = 'inline-flex items-center gap-1 text-[10.5px] font-extrabold px-2 py-1 rounded-full border ' +
-      (admin ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-agri-50 text-agri-700 border-agri-200');
-    $('loginBtnText').textContent = admin ? 'Masuk sebagai admin' : 'Masuk sebagai customer';
+      (staff ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-agri-50 text-agri-700 border-agri-200');
+    $('loginBtnText').textContent = staff ? 'Masuk ke ERP' : 'Masuk sebagai customer';
     icons();
   }
-  $('loginEmail').addEventListener('input', refreshRole);
+  $('loginMode').addEventListener('change', refreshRole);
 
   $('togglePw').onclick = () => {
     const p = $('loginPassword');
@@ -231,13 +237,27 @@
   };
 
   /* login */
-  $('loginForm').addEventListener('submit', (e) => {
+  $('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     setError('loginError', '');
+    const email = $('loginEmail').value.trim();
+    const password = $('loginPassword').value;
+    const label = $('loginBtnText');
+    const previous = label.textContent;
+    label.textContent = 'Memproses…';
     try {
-      const s = S.loginAccount($('loginEmail').value, $('loginPassword').value);
-      go(s.role);
-    } catch (err) { setError('loginError', err.message); }
+      if ($('loginMode').value === 'staff') {
+        const user = await S.loginStaff(email, password);
+        go(user.role, user.redirect);
+      } else {
+        const s = S.loginAccount(email, password);
+        go(s.role);
+      }
+    } catch (err) {
+      setError('loginError', err.message);
+    } finally {
+      label.textContent = previous;
+    }
   });
 
   /* register */
@@ -254,9 +274,14 @@
     } catch (err) { setError('registerError', err.message); }
   });
 
-  function go(role) {
-    const target = role === 'admin' ? '/page/erp/' : '/page/customer/';
-    const home = role === 'admin' ? '/page/erp' : '/page/customer';
+  const LANDING = {
+    admin: '/page/erp/', owner: '/page/erp/', cashier: '/page/kasir/',
+    warehouse: '/page/gudang/', customer: '/page/customer/'
+  };
+
+  function go(role, forcedTarget) {
+    const target = forcedTarget || LANDING[role] || '/page/customer/';
+    const home = target.replace(/\/$/, '');
     if (next && decodeURIComponent(next).indexOf(home) === 0) {
       location.replace(decodeURIComponent(next));
     } else {
@@ -271,7 +296,7 @@
     $('resumeName').textContent = session.name || (session.role === 'admin' ? 'Admin Toko Tani' : 'Customer');
     $('resumeEmail').textContent = session.email || '';
     $('resumeAvatar').textContent = (session.name || '?').trim().charAt(0).toUpperCase();
-    $('resumeGo').href = session.role === 'admin' ? '/page/erp/' : '/page/customer/';
+    $('resumeGo').href = session.redirect || LANDING[session.role] || '/page/customer/';
     $('resumeLogout').onclick = () => { S.logoutAll(); location.reload(); };
   }
 

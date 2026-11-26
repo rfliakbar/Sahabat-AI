@@ -6,6 +6,7 @@
 
   const D = window.AgriERPData;
   const AI = window.AgriERPai;
+  const EMP = window.AgriERPEmployees;
 
   const state = {
     view: 'dashboard',
@@ -13,7 +14,10 @@
     granularity: 'auto',
     range: null,
     charts: {},
-    ai: null
+    ai: null,
+    user: null,
+    employees: [],
+    editingEmployee: null
   };
 
   const $ = (id) => document.getElementById(id);
@@ -42,6 +46,8 @@
     new Date(iso).toLocaleString('id-ID', withTime
       ? { day: '2-digit', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' }
       : { day: '2-digit', month: 'short', year: 'numeric' });
+  const esc = (value) => String(value === null || value === undefined ? '' : value)
+    .replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   /* ------------------------------------------------------------------ */
   /* Navigasi                                                            */
@@ -52,10 +58,12 @@
     stok: ['Stok & Gudang', 'Inventori, pergerakan barang, dan rekomendasi restock'],
     keuangan: ['Laporan Keuangan', 'Laba rugi, arus biaya, dan rekap bulanan'],
     ai: ['AI Business Insight', 'Insight otomatis dan rekomendasi strategi bisnis'],
+    karyawan: ['Manajemen Karyawan', 'Kelola akun kasir & gudang beserta hak aksesnya'],
     pengaturan: ['Pengaturan & Integrasi', 'Konfigurasi toko, mesin AI, dan status modul']
   };
 
   function go(view) {
+    if (view === 'karyawan' && state.user && state.user.role !== 'owner') view = 'dashboard';
     state.view = view;
     document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
     const target = $('view-' + view);
@@ -175,6 +183,7 @@
     renderStockView(stock, sales, range);
     renderFinanceView(sum, expenses, range);
     renderSettings(db);
+    renderEmployees();
 
     $('ai-teaser').textContent = `Periode ${range.label}: omzet ${money(sum.revenue)} dari ${sum.transactions} transaksi. ` +
       `${stock.filter((s) => s.status === 'critical' || s.status === 'warning').length} produk butuh perhatian stok.`;
@@ -762,6 +771,163 @@
     $('ai-answer-meta').textContent = '· memproses';
   }
 
+  /* ---------------- Akun & karyawan (backend) ---------------- */
+  function employeeMsg(id, message) {
+    const box = $(id);
+    if (!box) return;
+    box.textContent = message || '';
+    box.classList.toggle('hidden', !message);
+  }
+
+  async function loadSession() {
+    if (!EMP) return;
+    try {
+      const res = await EMP.me();
+      state.user = res.user;
+      $('user-name').textContent = res.user.name || '—';
+      $('user-role').textContent = res.user.role_label || res.user.role;
+      $('user-avatar').textContent = (res.user.name || '?').trim().charAt(0).toUpperCase();
+      const nav = $('nav-karyawan');
+      if (nav) nav.classList.toggle('hidden', res.user.role !== 'owner');
+      $('logoutBtn').onclick = async () => {
+        try { await EMP.logout(); } catch (e) { /* tetap keluar secara lokal */ }
+        location.replace('/login/');
+      };
+    } catch (e) {
+      location.replace('/login/?next=' + encodeURIComponent(location.pathname + location.search));
+    }
+  }
+
+  function resetEmployeeForm() {
+    state.editingEmployee = null;
+    const form = $('employeeForm');
+    if (!form) return;
+    form.reset();
+    $('empPassword').required = true;
+    $('empPasswordHint').textContent = '(min. 8 karakter)';
+    $('empSubmit').textContent = 'Simpan Karyawan';
+    employeeMsg('employeeError', '');
+    employeeMsg('employeeOk', '');
+  }
+
+  async function renderEmployees() {
+    if (state.view !== 'karyawan' || !EMP) return;
+    const tbody = $('employeeTable');
+    if (!tbody) return;
+    try {
+      const res = await EMP.list();
+      state.employees = res.employees || [];
+      tbody.innerHTML = state.employees.length ? state.employees.map((u) => `
+        <tr>
+          <td class="px-3 py-2 font-semibold text-slate-700">${esc(u.name)}</td>
+          <td class="px-3 py-2 text-slate-600">${esc(u.email)}</td>
+          <td class="px-3 py-2"><span class="badge ${u.role === 'cashier' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-blue-50 text-blue-700 border border-blue-200'}">${esc(u.role_label || u.role)}</span></td>
+          <td class="px-3 py-2"><span class="badge ${u.active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">${u.active ? 'Aktif' : 'Nonaktif'}</span></td>
+          <td class="px-3 py-2 text-slate-500">${esc(fmtDate(u.created_at))}</td>
+          <td class="px-3 py-2">
+            <div class="flex items-center gap-1">
+              <button data-emp-edit="${esc(u.id)}" class="p-1.5 rounded-lg hover:bg-slate-100" title="Edit"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+              <button data-emp-toggle="${esc(u.id)}" class="p-1.5 rounded-lg hover:bg-slate-100" title="${u.active ? 'Nonaktifkan' : 'Aktifkan'}"><i data-lucide="${u.active ? 'user-x' : 'user-check'}" class="w-3.5 h-3.5"></i></button>
+              <button data-emp-delete="${esc(u.id)}" class="p-1.5 rounded-lg hover:bg-rose-50 text-rose-600" title="Hapus"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+            </div>
+          </td>
+        </tr>`).join('') : '<tr><td colspan="6" class="text-center text-slate-400 py-6">Belum ada karyawan.</td></tr>';
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-rose-500 py-6">${esc(err.message)}</td></tr>`;
+    }
+    await renderEmployeeActivity();
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  async function renderEmployeeActivity() {
+    const box = $('employeeActivity');
+    if (!box || !EMP) return;
+    try {
+      const res = await EMP.activity();
+      const rows = res.activity || [];
+      box.innerHTML = rows.length ? rows.slice(0, 12).map((a) => `
+        <div class="flex items-start gap-2 border-b border-slate-100 pb-1.5">
+          <span class="font-mono text-[10px] text-slate-400 w-28 flex-shrink-0">${esc(fmtDate(a.created_at, true))}</span>
+          <span class="font-bold text-slate-600">${esc(a.actor_name || 'Sistem')}</span>
+          <span class="text-slate-500">${esc(String(a.action || '').replace(/_/g, ' ').toLowerCase())} — ${esc(a.detail || '-')}</span>
+        </div>`).join('') : '<p>Belum ada aktivitas akun.</p>';
+    } catch (e) {
+      box.textContent = e.message;
+    }
+  }
+
+  function bindEmployeeControls() {
+    if (!EMP || !$('employeeForm')) return;
+    $('employeeForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      employeeMsg('employeeError', '');
+      employeeMsg('employeeOk', '');
+      const payload = {
+        name: $('empName').value.trim(),
+        email: $('empEmail').value.trim(),
+        password: $('empPassword').value,
+        role: $('empRole').value
+      };
+      try {
+        if (state.editingEmployee) {
+          await EMP.update(state.editingEmployee, payload);
+          employeeMsg('employeeOk', 'Akun karyawan berhasil diperbarui.');
+        } else {
+          await EMP.create(payload);
+          employeeMsg('employeeOk', 'Akun karyawan berhasil dibuat.');
+        }
+        resetEmployeeForm();
+        await renderEmployees();
+      } catch (err) {
+        employeeMsg('employeeError', err.message);
+      }
+    });
+
+    $('empCancel').onclick = resetEmployeeForm;
+    $('empReload').onclick = () => renderEmployees();
+
+    document.body.addEventListener('click', async (e) => {
+      const edit = e.target.closest('[data-emp-edit]');
+      const toggle = e.target.closest('[data-emp-toggle]');
+      const del = e.target.closest('[data-emp-delete]');
+      if (!edit && !toggle && !del) return;
+      e.preventDefault();
+      employeeMsg('employeeError', '');
+      employeeMsg('employeeOk', '');
+
+      if (edit) {
+        const user = state.employees.find((u) => u.id === edit.dataset.empEdit);
+        if (!user) return;
+        state.editingEmployee = user.id;
+        $('empName').value = user.name;
+        $('empEmail').value = user.email;
+        $('empRole').value = user.role;
+        $('empPassword').value = '';
+        $('empPassword').required = false;
+        $('empPasswordHint').textContent = '(kosongkan jika tidak diubah)';
+        $('empSubmit').textContent = 'Perbarui Karyawan';
+        $('empName').focus();
+        return;
+      }
+
+      const id = toggle ? toggle.dataset.empToggle : del.dataset.empDelete;
+      try {
+        if (toggle) {
+          const user = state.employees.find((u) => u.id === id);
+          await EMP.update(id, { active: !user.active });
+          employeeMsg('employeeOk', 'Status karyawan diperbarui.');
+        } else {
+          if (!confirm('Hapus akun karyawan ini? Tindakan ini tidak dapat dibatalkan.')) return;
+          await EMP.remove(id);
+          employeeMsg('employeeOk', 'Akun karyawan dihapus.');
+        }
+        await renderEmployees();
+      } catch (err) {
+        employeeMsg('employeeError', err.message);
+      }
+    });
+  }
+
   /* ---------------- Ekspor ---------------- */
   function exportCSV() {
     const range = state.range;
@@ -771,6 +937,10 @@
       rows = [['SKU', 'Produk', 'Kategori', 'Stok Gudang', 'Stok Rak', 'Terjual 30h', 'Cover (hari)', 'Status', 'Nilai Inventori']]
         .concat(D.stockStatus().map((p) => [p.sku, p.name, p.category, p.warehouseStock, p.shelfCurrent, p.qty30, p.cover ? Math.round(p.cover) : '', p.status, p.inventoryValue]));
       name = 'stok-inventori';
+    } else if (state.view === 'karyawan') {
+      rows = [['Nama', 'Email', 'Role', 'Status', 'Dibuat']]
+        .concat(state.employees.map((u) => [u.name, u.email, u.role_label || u.role, u.active ? 'Aktif' : 'Nonaktif', fmtDate(u.created_at)]));
+      name = 'karyawan';
     } else if (state.view === 'keuangan') {
       rows = [['Bulan', 'Pendapatan', 'HPP', 'Laba Kotor', 'Biaya Bayar', 'Opex', 'Laba Bersih']]
         .concat(D.monthlyFinancials().map((m) => [m.label, m.revenue, m.hpp, m.gross, m.fees, m.opex, m.net]));
@@ -821,6 +991,8 @@
 
     $('ai-question').addEventListener('keydown', (e) => { if (e.key === 'Enter') askAI(); });
 
+    bindEmployeeControls();
+
     window.addEventListener('erp:update', () => {
       $('sidebar-sync-time').textContent = 'Event masuk ' + new Date().toLocaleTimeString('id-ID');
       render();
@@ -840,11 +1012,12 @@
   }
 
   /* ---------------- Bootstrap ---------------- */
-  function init() {
+  async function init() {
     D.load();
     D.connectRealtime();
     bindNav();
     bindControls();
+    await loadSession();
     render();
     setInterval(() => { $('footer-clock').textContent = new Date().toLocaleString('id-ID'); }, 30000);
     if (window.lucide) window.lucide.createIcons();

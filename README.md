@@ -12,22 +12,24 @@ Sistem terpadu **AgriSuite** untuk toko saprotan & hasil tani: dashboard ERP, te
 - **Admin:** <https://sahabat-ai.ridwanfatiya.workers.dev/admin/>
 - **Satu pintu masuk (login):** <https://sahabat-ai.ridwanfatiya.workers.dev/login/>
 
-## Satu Link, Dua Peran
+## Satu Link Login, Tiga Peran ERP + Customer
 
-Semua pengguna masuk lewat **satu tautan: `/login/`**. Sistem login menentukan peran secara otomatis:
+Semua pengguna masuk lewat **`/login/`**. Pilih **Jenis akun** terlebih dahulu:
 
-| Peran | Cara masuk | Diarahkan ke |
-|---|---|---|
-| **Customer** | Daftar akun baru atau masuk dengan email pribadi | `/page/customer/` |
-| **Admin** | Email khusus toko **`admin@tokotani.id`** + password | `/page/erp/` (dashboard ERP = tampilan admin) |
+| Peran | Cara masuk | Diarahkan ke | Boleh mengakses |
+|---|---|---|---|
+| **Pemilik (Owner)** | Akun bawaan `admin@tokotani.id` / `admin123` | `/erp/` | Seluruh ERP, kasir, gudang, admin toko, **Manajemen Karyawan** |
+| **Kasir** | Akun dibuat pemilik di menu Manajemen Karyawan | `/kasir/` | Terminal kasir & riwayat penjualan |
+| **Gudang** | Akun dibuat pemilik di menu Manajemen Karyawan | `/gudang/` | Stok, barang masuk/keluar, produk, pergerakan inventory |
+| **Customer** | Daftar akun baru / email pribadi | `/customer/` | Katalog & pesanan toko |
 
-- Password admin demo: **`admin123`**.
-- Admin yang berhasil masuk langsung diarahkan ke **dashboard ERP** (`/erp/`), yang berfungsi sebagai tampilan akun admin. Panel kelola toko tetap dapat dibuka dari menu **Kelola Toko (Admin)** di sidebar ERP.
-- Email berdomain `@tokotani.id` otomatis dikenali sebagai admin (badge berubah saat email diketik).
-- Customer tidak diizinkan memakai email toko saat mendaftar.
-- Sesi disimpan di `localStorage`, jadi tidak perlu login ulang saat membuka halaman.
-- Guard peran: customer yang membuka `/admin/` dikembalikan ke toko; admin yang membuka `/customer/` dikembalikan ke dashboard.
-- Tombol **Keluar** tersedia di header kedua halaman dan menghapus sesi.
+- **Backend sungguhan:** akun, sesi, dan log aktivitas disimpan di SQLite-backed **Durable Object** (`worker.js`), bukan `localStorage`.
+- Password di-hash dengan **PBKDF2-SHA256 (210.000 iterasi + salt acak 16 byte)**. Tidak ada password plain text di database maupun browser.
+- Sesion memakai cookie `HttpOnly` + `SameSite=Lax` (`Secure` otomatis di HTTPS), berlaku 12 jam.
+- **RBAC ditegakkan di Worker**: sebelum halaman internal dikirim, peran dicek dari sesi di database. Menu yang tidak diizinkan juga disembunyikan di frontend.
+- Endpoint API: `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`, `/api/employees` (GET/POST/PATCH/DELETE, owner only), `/api/activity` (owner only).
+- Akun bawaan pemilik hanya dipakai saat inisialisasi. Ganti lewat `vars` `INITIAL_OWNER_EMAIL` / `INITIAL_OWNER_PASSWORD` di `wrangler.jsonc` sebelum deploy pertama, lalu buat akun kasir/gudang lewat dashboard.
+- Customer tetap memakai alur toko lama (`localStorage`) agar fitur belanja tidak berubah.
 
 Dua halaman baru dengan data toko yang saling terhubung (produk, stok, dan pesanan) melalui `localStorage` + `BroadcastChannel`.
 
@@ -47,7 +49,7 @@ Dua halaman baru dengan data toko yang saling terhubung (produk, stok, dan pesan
 - **Pelanggan:** rekap pelanggan dari pesanan (jumlah pesanan, total belanja, transaksi terakhir).
 - **Reset demo** untuk mengembalikan data contoh.
 
-> Catatan: ini demo statis tanpa backend. Login admin hanya pembatas tampilan di sisi klien — jangan gunakan untuk data nyata.
+> Catatan: autentikasi staf & RBAC kini memakai backend Worker + Durable Object. Data transaksi ERP/kasir/gudang masih memakai penyimpanan lokal browser yang sudah ada (lihat `page/erp/README.md`) dan tidak diubah oleh pembaruan ini.
 
 Data toko tersimpan pada kunci `localStorage` **`agrisuite_shop_v1`** (logika bersama di `page/shop/store.js`).
 
@@ -58,13 +60,13 @@ Data toko tersimpan pada kunci `localStorage` **`agrisuite_shop_v1`** (logika be
 python -m http.server 8080
 ```
 
-Buka <http://localhost:8080/>. `_redirects` (URL pendek `/erp`, `/kasir`, `/gudang`, `/customer`, `/admin`) hanya aktif di Cloudflare; secara lokal gunakan `/page/erp/`, `/page/kasir/`, `/page/gudang/`, `/page/customer/`, `/page/admin/`.
+Buka <http://localhost:8080/> untuk melihat tampilan statis. Route pendek (`/erp`, `/kasir`, `/gudang`, `/customer`, `/admin`) dan endpoint `/api/*` hanya aktif saat dijalankan sebagai Worker (Cloudflare atau `npx wrangler dev`). Secara lokal tanpa Worker, gunakan `/page/.../`.
 
-> `/customer/` dan `/admin/` juga tersedia di lokal melalui halaman pengalihan di folder `customer/` dan `admin/`.
+> Untuk mencoba login staf/RBAC secara lokal, jalankan `npx wrangler dev` (membutuhkan Node.js) atau langsung gunakan deployment Cloudflare.
 
 ## Deploy ke Cloudflare
 
-Situs ini di-deploy sebagai **Cloudflare Workers Static Assets** langsung dari folder root repo.
+Situs ini di-deploy sebagai **Cloudflare Worker** (`worker.js`) yang melayani API sekaligus static assets dari folder root repo. Akun/sesi memakai satu SQLite-backed Durable Object `AuthStore` yang dibuat otomatis lewat `exports` di `wrangler.jsonc`.
 
 ### Otomatis (utama)
 
@@ -74,7 +76,7 @@ Workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) berjalan
 git push origin main  →  GitHub Actions  →  Cloudflare (live ±1 menit)
 ```
 
-Membutuhkan secret repo `CLOUDFLARE_API_TOKEN` (API token Cloudflare dengan izin Workers Scripts: Edit).
+Membutuhkan secret repo `CLOUDFLARE_API_TOKEN` (API token Cloudflare dengan izin **Workers Scripts: Edit** dan **Durable Objects: Edit**). Migration Durable Object dijalankan otomatis saat deploy; tidak perlu membuat database/manual step.
 
 ### Manual (cadangan)
 
@@ -82,6 +84,6 @@ Membutuhkan secret repo `CLOUDFLARE_API_TOKEN` (API token Cloudflare dengan izin
 npx wrangler deploy --name sahabat-ai
 ```
 
-Konfigurasi ada di `wrangler.jsonc` (asset directory `.`, custom 404 page). File `.assetsignore` mengecualikan `.git`, `.github`, `node_modules`, dan konfigurasi deploy dari publik.
+Konfigurasi ada di `wrangler.jsonc` (`main: worker.js`, assets directory `.`, binding `AUTH_STORE`, `ASSETS`, `run_worker_first: true`, custom 404 page). File `.assetsignore` mengecualikan `.git`, `.github`, `node_modules`, `worker.js`, dan konfigurasi deploy dari publik.
 
 Panduan modul ERP selengkapnya: [`page/erp/README.md`](page/erp/README.md).

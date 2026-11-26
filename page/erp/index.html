@@ -74,6 +74,7 @@
         <a href="#" data-view="stok" class="nav-link"><i data-lucide="warehouse" class="w-4 h-4"></i> Stok &amp; Gudang</a>
         <a href="#" data-view="keuangan" class="nav-link"><i data-lucide="landmark" class="w-4 h-4"></i> Laporan Keuangan</a>
         <a href="#" data-view="ai" class="nav-link"><i data-lucide="sparkles" class="w-4 h-4"></i> AI Business Insight</a>
+        <a href="#" data-view="karyawan" id="nav-karyawan" class="nav-link hidden"><i data-lucide="users" class="w-4 h-4"></i> Manajemen Karyawan</a>
       </nav>
 
       <p class="text-[10px] uppercase tracking-widest text-agri-400 font-bold px-2 mt-6 mb-2">Integrasi</p>
@@ -128,6 +129,17 @@
           <option value="month">Per Bulan</option>
           <option value="year">Per Tahun</option>
         </select>
+
+        <div class="flex items-center gap-2 pl-2 border-l border-slate-200">
+          <div id="user-avatar" class="w-8 h-8 rounded-full bg-agri-100 text-agri-700 flex items-center justify-center text-xs font-extrabold">?</div>
+          <div class="leading-tight">
+            <p id="user-name" class="text-[11.5px] font-bold text-slate-700">—</p>
+            <p id="user-role" class="text-[10px] text-slate-500">—</p>
+          </div>
+          <button id="logoutBtn" title="Keluar" class="p-2 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 transition">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+          </button>
+        </div>
 
         <button onclick="App.refresh(true)" title="Muat ulang data" class="p-2 rounded-xl bg-agri-50 border border-agri-200 text-agri-700 hover:bg-agri-100 transition">
           <i data-lucide="refresh-cw" class="w-4 h-4"></i>
@@ -490,6 +502,66 @@
     </section>
 
     <!-- ================================================================
+         VIEW: MANAJEMEN KARYAWAN (OWNER)
+    ================================================================= -->
+    <section id="view-karyawan" class="view space-y-6">
+      <div class="card p-5">
+        <div class="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <h3 class="font-bold text-sm text-agri-950 flex items-center gap-1.5"><i data-lucide="user-plus" class="w-4 h-4 text-agri-700"></i> Tambah / Edit Karyawan</h3>
+            <p class="text-[11px] text-slate-500 mt-1">Akun dibuat di database. Hak akses mengikuti role yang dipilih.</p>
+          </div>
+          <span class="badge bg-agri-50 text-agri-700 border border-agri-200">Khusus Pemilik</span>
+        </div>
+        <form id="employeeForm" class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+          <label class="block">
+            <span class="text-[11px] font-bold text-slate-600">Nama lengkap</span>
+            <input id="empName" required minlength="2" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-agri-500" placeholder="Nama karyawan">
+          </label>
+          <label class="block">
+            <span class="text-[11px] font-bold text-slate-600">Email login</span>
+            <input id="empEmail" type="email" required class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-agri-500" placeholder="kasir@tokotani.id">
+          </label>
+          <label class="block">
+            <span class="text-[11px] font-bold text-slate-600">Password <span id="empPasswordHint" class="font-normal text-slate-400">(min. 8 karakter)</span></span>
+            <input id="empPassword" type="password" minlength="8" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-agri-500" placeholder="Kosongkan saat edit jika tidak diubah">
+          </label>
+          <label class="block">
+            <span class="text-[11px] font-bold text-slate-600">Role</span>
+            <select id="empRole" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-agri-500">
+              <option value="cashier">Kasir</option>
+              <option value="warehouse">Gudang</option>
+            </select>
+          </label>
+          <div class="md:col-span-2 flex items-center gap-2">
+            <button type="submit" id="empSubmit" class="px-4 py-2.5 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-xs font-bold transition">Simpan Karyawan</button>
+            <button type="button" id="empCancel" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition">Batal</button>
+          </div>
+        </form>
+        <p id="employeeError" class="hidden text-[11.5px] font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2 mt-3"></p>
+        <p id="employeeOk" class="hidden text-[11.5px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 mt-3"></p>
+      </div>
+
+      <div class="card p-5">
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <h3 class="font-bold text-sm text-agri-950 flex items-center gap-1.5"><i data-lucide="users" class="w-4 h-4 text-agri-700"></i> Daftar Karyawan</h3>
+          <button id="empReload" class="p-2 rounded-xl bg-agri-50 border border-agri-200 text-agri-700 hover:bg-agri-100 transition" title="Muat ulang"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="data w-full text-left">
+            <thead><tr><th>Nama</th><th>Email</th><th>Role</th><th>Status</th><th>Dibuat</th><th>Aksi</th></tr></thead>
+            <tbody id="employeeTable"><tr><td colspan="6" class="text-center text-slate-400 py-6">Memuat…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card p-5">
+        <h3 class="font-bold text-sm text-agri-950 flex items-center gap-1.5 mb-3"><i data-lucide="history" class="w-4 h-4 text-agri-700"></i> Aktivitas Akun</h3>
+        <div id="employeeActivity" class="text-[11.5px] text-slate-500 space-y-1">Memuat…</div>
+      </div>
+    </section>
+
+    <!-- ================================================================
          VIEW: PENGATURAN
     ================================================================= -->
     <section id="view-pengaturan" class="view space-y-6">
@@ -579,6 +651,7 @@
 
 <script src="assets/data.js"></script>
 <script src="assets/ai.js"></script>
+<script src="assets/employees.js"></script>
 <script src="assets/app.js"></script>
 </body>
 </html>

@@ -31,12 +31,28 @@ Deploy ulang dari root repo: `npx wrangler deploy --name sahabat-ai`.
 | **Stok & Gudang** | Nilai inventori, perputaran stok, pergerakan masuk vs terjual, status inventori, rekomendasi restock otomatis, log pergerakan & pembelian |
 | **Laporan Keuangan** | Pendapatan, HPP, laba kotor, biaya pembayaran, opex, laba bersih; grafik 12 bulan; rekap bulanan; cetak laporan |
 | **AI Business Insight** | 7+ insight otomatis (tren, margin, stok kritis, dead stock, pola jam/hari, metode bayar, perputaran), roadmap strategi 7/30/90 hari, Q&A bisnis |
+| **Manajemen Karyawan** | (Owner only) Tambah/edit/nonaktifkan/hapus akun Kasir & Gudang, lihat daftar dan log aktivitas akun — tersimpan di backend SQLite |
 | **Pengaturan** | Nama toko, penyedia AI, log aktivitas, reset data |
 
 ## Filter Periode
 
 Preset: **Hari ini, 7 Hari, 30 Hari, Bulan ini, Tahun ini, Semua**.
 Agregasi: **Otomatis / Per Hari / Per Bulan / Per Tahun**.
+
+## Akses & Peran (RBAC)
+
+| Peran | Dashboard | Kasir | Gudang | Manajemen Karyawan |
+|---|---|---|---|---|
+| Pemilik (`owner`) | ✅ | ✅ | ✅ | ✅ |
+| Kasir (`cashier`) | ❌ | ✅ | ❌ | ❌ |
+| Gudang (`warehouse`) | ❌ | ❌ | ✅ | ❌ |
+
+Login staf memakai `/login/` → pilih **Pemilik / Karyawan (ERP)**. Setelah login, Worker membaca role dari database dan mengarahkan ke dashboard masing-masing. Halaman internal (`/erp/`, `/kasir/`, `/gudang/`, `/admin/`) ditolak di **backend** bila role tidak sesuai — bukan hanya disembunyikan di menu.
+
+- Akun pemilik bawaan: `admin@tokotani.id` / `admin123` (di-hash PBKDF2 di database).
+- Kasir & gudang dibuat pemilik lewat menu **Manajemen Karyawan** di sidebar ERP.
+- Endpoint backend: `/api/auth/*`, `/api/employees`, `/api/activity` (lihat `worker.js`).
+- Klien API ERP ada di `assets/employees.js`; data akun tidak memakai `localStorage`.
 
 ## Integrasi AI
 
@@ -65,7 +81,8 @@ page/erp/
 │   ├── styles.css      # Gaya kustom, print styles, komponen
 │   ├── data.js         # Data layer: seed demo, agregasi, storage, realtime bridge
 │   ├── ai.js           # Mesin insight lokal + integrasi LLM
-│   └── app.js          # Render UI, chart, filter, ekspor, event
+│   ├── employees.js    # Klien API akun/karyawan (/api/*)
+│   └── app.js          # Render UI, chart, filter, ekspor, event, Manajemen Karyawan
 └── README.md
 ```
 

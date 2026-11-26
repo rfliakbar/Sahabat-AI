@@ -299,7 +299,63 @@
   }
   function clearSession() { localStorage.removeItem(SESSION_KEY); }
 
-  function logoutAll() { clearSession(); logout(); }
+  /* ------------------------------------------------------------------ */
+  /* Akun ERP (owner / kasir / gudang) melalui backend                   */
+  /* ------------------------------------------------------------------ */
+  const STAFF_LANDING = {
+    owner: '/page/erp/',
+    admin: '/page/erp/',
+    cashier: '/page/kasir/',
+    warehouse: '/page/gudang/',
+    customer: '/page/customer/'
+  };
+
+  function landingFor(role) { return STAFF_LANDING[role] || '/page/customer/'; }
+
+  async function apiRequest(path, options) {
+    const opts = Object.assign({ credentials: 'same-origin' }, options || {});
+    if (opts.body && typeof opts.body !== 'string') {
+      opts.headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+      opts.body = JSON.stringify(opts.body);
+    }
+    const res = await fetch(path, opts);
+    let data = {};
+    try { data = await res.json(); } catch (e) { data = {}; }
+    if (!res.ok) throw new Error(data.error || 'Permintaan gagal. Status ' + res.status);
+    return data;
+  }
+
+  /** Login staf: role asli disimpan di erp_role, role 'admin' dipakai panel lama. */
+  async function loginStaff(email, password) {
+    const data = await apiRequest('/api/auth/login', {
+      method: 'POST',
+      body: { email, password }
+    });
+    const u = data.user;
+    const sessionRole = u.role === 'owner' ? 'admin' : u.role;
+    setSession({
+      role: sessionRole,
+      erp_role: u.role,
+      name: u.name,
+      email: u.email,
+      redirect: u.redirect || landingFor(sessionRole)
+    });
+    return Object.assign({}, u, { role: sessionRole, redirect: u.redirect || landingFor(sessionRole) });
+  }
+
+  async function logoutAllAsync() {
+    try { await apiRequest('/api/auth/logout', { method: 'POST' }); } catch (e) { /* abaikan */ }
+    clearSession();
+    logout();
+  }
+
+  function logoutAll() {
+    try {
+      fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin', keepalive: true });
+    } catch (e) { /* abaikan */ }
+    clearSession();
+    logout();
+  }
 
   /** Arahkan ke login bila sesi tidak sesuai; kembalikan sesi aktif. */
   function requireRole(role, nextPath) {
@@ -309,8 +365,9 @@
       location.replace('/page/login/?next=' + next);
       return null;
     }
-    if (role && s.role !== role) {
-      location.replace(s.role === 'admin' ? '/page/erp/' : '/page/customer/');
+    const allowed = Array.isArray(role) ? role : [role];
+    if (allowed.length && !allowed.includes(s.role)) {
+      location.replace(landingFor(s.role));
       return null;
     }
     return s;
@@ -331,6 +388,7 @@
     rupiah, load, save, onChange, createOrder, updateOrderStatus,
     upsertProduct, toggleProduct, resetDemo, stats,
     login, isLoggedIn, logout,
-    isAdminEmail, register, loginAccount, setSession, getSession, clearSession, logoutAll, requireRole, ordersOf
+    isAdminEmail, register, loginAccount, loginStaff, setSession, getSession, clearSession,
+    logoutAll, logoutAllAsync, requireRole, landingFor, ordersOf
   };
 })(window);
