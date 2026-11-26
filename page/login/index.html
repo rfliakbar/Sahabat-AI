@@ -255,8 +255,9 @@
   });
 
   function go(role) {
-    const target = role === 'admin' ? '/page/admin/' : '/page/customer/';
-    if (next && decodeURIComponent(next).indexOf(role === 'admin' ? '/page/admin' : '/page/customer') === 0) {
+    const target = role === 'admin' ? '/page/erp/' : '/page/customer/';
+    const home = role === 'admin' ? '/page/erp' : '/page/customer';
+    if (next && decodeURIComponent(next).indexOf(home) === 0) {
       location.replace(decodeURIComponent(next));
     } else {
       location.replace(target);
@@ -270,7 +271,7 @@
     $('resumeName').textContent = session.name || (session.role === 'admin' ? 'Admin Toko Tani' : 'Customer');
     $('resumeEmail').textContent = session.email || '';
     $('resumeAvatar').textContent = (session.name || '?').trim().charAt(0).toUpperCase();
-    $('resumeGo').href = session.role === 'admin' ? '/page/admin/' : '/page/customer/';
+    $('resumeGo').href = session.role === 'admin' ? '/page/erp/' : '/page/customer/';
     $('resumeLogout').onclick = () => { S.logoutAll(); location.reload(); };
   }
 

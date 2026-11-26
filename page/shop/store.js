@@ -310,7 +310,7 @@
       return null;
     }
     if (role && s.role !== role) {
-      location.replace(s.role === 'admin' ? '/page/admin/' : '/page/customer/');
+      location.replace(s.role === 'admin' ? '/page/erp/' : '/page/customer/');
       return null;
     }
     return s;

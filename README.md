@@ -19,9 +19,10 @@ Semua pengguna masuk lewat **satu tautan: `/login/`**. Sistem login menentukan p
 | Peran | Cara masuk | Diarahkan ke |
 |---|---|---|
 | **Customer** | Daftar akun baru atau masuk dengan email pribadi | `/page/customer/` |
-| **Admin** | Email khusus toko **`admin@tokotani.id`** + password | `/page/admin/` |
+| **Admin** | Email khusus toko **`admin@tokotani.id`** + password | `/page/erp/` (dashboard ERP = tampilan admin) |
 
 - Password admin demo: **`admin123`**.
+- Admin yang berhasil masuk langsung diarahkan ke **dashboard ERP** (`/erp/`), yang berfungsi sebagai tampilan akun admin. Panel kelola toko tetap dapat dibuka dari menu **Kelola Toko (Admin)** di sidebar ERP.
 - Email berdomain `@tokotani.id` otomatis dikenali sebagai admin (badge berubah saat email diketik).
 - Customer tidak diizinkan memakai email toko saat mendaftar.
 - Sesi disimpan di `localStorage`, jadi tidak perlu login ulang saat membuka halaman.
