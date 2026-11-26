@@ -575,7 +575,7 @@ export default {
 
     try {
     if (url.pathname.startsWith("/api/")) {
-      return handleApi(request, env, url);
+      return await handleApi(request, env, url);
     }
 
     const internalPath = resolveInternalPath(url.pathname);
