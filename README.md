@@ -42,7 +42,9 @@ Data toko tersimpan pada kunci `localStorage` **`agrisuite_shop_v1`** (logika be
 python -m http.server 8080
 ```
 
-Buka <http://localhost:8080/>. Catatan: `_redirects` (URL pendek `/erp`, `/kasir`, `/gudang`) hanya aktif di Cloudflare; secara lokal gunakan `/page/erp/`, `/page/kasir/`, `/page/gudang/`.
+Buka <http://localhost:8080/>. `_redirects` (URL pendek `/erp`, `/kasir`, `/gudang`, `/customer`, `/admin`) hanya aktif di Cloudflare; secara lokal gunakan `/page/erp/`, `/page/kasir/`, `/page/gudang/`, `/page/customer/`, `/page/admin/`.
+
+> `/customer/` dan `/admin/` juga tersedia di lokal melalui halaman pengalihan di folder `customer/` dan `admin/`.
 
 ## Deploy ke Cloudflare
 
