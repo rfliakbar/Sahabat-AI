@@ -573,6 +573,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    try {
     if (url.pathname.startsWith("/api/")) {
       return handleApi(request, env, url);
     }
@@ -601,5 +602,8 @@ export default {
       assetRequest = new Request(assetUrl, request);
     }
     return env.ASSETS.fetch(assetRequest);
+    } catch (err) {
+      return json({ error: "Worker exception", detail: String(err && err.stack || err) }, 500);
+    }
   },
 };
