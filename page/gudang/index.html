@@ -93,18 +93,16 @@
 <body class="agri-pattern text-slate-800 font-sans antialiased min-h-screen flex flex-col lg:flex-row">
 
     <!-- MOBILE HEADER -->
-    <header class="lg:hidden bg-agri-900 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-md">
-        <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-xl bg-agri-500 flex items-center justify-center shadow-inner">
+    <header class="lg:hidden bg-agri-950 text-white px-4 py-3.5 flex items-center justify-between sticky top-0 z-40 shadow-lg shadow-agri-950/20 border-b border-agri-800">
+        <a href="/" class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-agri-400 to-agri-600 flex items-center justify-center shadow-lg shadow-agri-900/40">
                 <i data-lucide="sprout" class="w-5 h-5 text-white"></i>
             </div>
             <div>
-                <h1 class="font-bold text-base leading-tight">AgriStock <span class="text-agri-300 font-medium">WMS</span></h1>
-                <p class="text-[11px] text-agri-200 flex items-center gap-1">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span> POS Terhubung
-                </p>
+                <p class="font-extrabold text-lg leading-none tracking-tight">Agri<span class="text-agri-300">Suite</span></p>
+                <p class="text-[10.5px] text-agri-300 mt-1">ERP · Kasir · Gudang</p>
             </div>
-        </div>
+        </a>
         <div class="flex items-center gap-2">
             <button onclick="openPosSimulatorModal()" class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs rounded-lg flex items-center gap-1 transition">
                 <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i> Simulasi POS
@@ -125,8 +123,8 @@
                         <i data-lucide="sprout" class="w-6 h-6 text-white"></i>
                     </div>
                     <div>
-                        <span class="font-extrabold text-lg tracking-tight block leading-none">AgriStock</span>
-                        <span class="text-xs text-agri-300 font-medium">Warehouse & Shelf Sync</span>
+                        <span class="font-extrabold text-lg tracking-tight block leading-none">Agri<span class="text-agri-300">Suite</span></span>
+                        <span class="text-xs text-agri-300 font-medium">ERP · Kasir · Gudang</span>
                     </div>
                 </div>
                 <button onclick="toggleMobileMenu()" class="lg:hidden text-agri-300 hover:text-white">
@@ -174,7 +172,6 @@
                         <i data-lucide="cable" class="w-4 h-4"></i>
                         Jembatan API Kasir
                     </span>
-                    <span class="text-[10px] uppercase tracking-wider bg-agri-800 text-agri-300 px-1.5 py-0.5 rounded">Docs</span>
                 </button>
             </nav>
         </div>
@@ -182,14 +179,13 @@
         <!-- Bottom Action: POS Simulator for Testing -->
         <div class="p-4 border-t border-agri-800/70 space-y-3">
             <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-400/30">
-                <div class="flex items-center gap-2 text-amber-300 text-xs font-semibold mb-1">
+                <div class="flex items-center gap-2 text-amber-300 text-xs font-semibold mb-2.5">
                     <i data-lucide="flask-conical" class="w-4 h-4"></i>
-                    <span>Uji Alur Bagian B & C</span>
+                    <span>Simulasi Transaksi Kasir</span>
                 </div>
-                <p class="text-[11px] text-agri-200 mb-2.5">Simulasikan pembelian dari sistem kasir untuk melihat stok gudang & rak berkurang otomatis.</p>
                 <button onclick="openPosSimulatorModal()" class="w-full py-2 px-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg shadow transition flex items-center justify-center gap-1.5">
                     <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i>
-                    Simulasi Transaksi Kasir
+                    Mulai Simulasi
                 </button>
             </div>
 
@@ -326,7 +322,7 @@
         <section id="tab-replenishment" class="hidden space-y-6">
             <div>
                 <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold mb-2">
-                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Bagian B — Replenishment Rak & Monitoring
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Replenishment &amp; Monitoring
                 </div>
                 <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Notifikasi Pengisian Rak Pajangan</h2>
                 <p class="text-sm text-slate-600 mt-1">Daftar barang yang stok display raknya mencapai atau di bawah batas minimal setelah transaksi di kasir.</p>
@@ -627,6 +623,42 @@ posChannel.postMessage({
     </div>
 
     <!-- =========================================================================
+         MODAL KONFIRMASI HAPUS PRODUK
+    ========================================================================== -->
+    <div id="delete-product-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="px-5 py-4 bg-rose-600 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center">
+                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    </div>
+                    <h3 class="font-bold text-base">Hapus Produk?</h3>
+                </div>
+                <button onclick="closeDeleteModal()" class="p-1.5 rounded-lg hover:bg-rose-700 text-rose-100" aria-label="Tutup">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-5 space-y-4">
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+                    <p id="delete-product-name" class="font-bold text-slate-900 text-sm leading-snug">—</p>
+                    <p id="delete-product-sku" class="text-xs font-mono text-slate-500 mt-1">—</p>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Produk ini akan dihapus permanen dari Gudang dan Katalog Kasir. Tindakan ini tidak dapat dibatalkan.
+                </p>
+
+                <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
+                    <button type="button" onclick="closeDeleteModal()" class="px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">Batal</button>
+                    <button type="button" onclick="confirmDeleteProduct()" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold rounded-xl shadow-md transition flex items-center gap-2">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> Hapus Produk
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
          MODAL 3: SIMULATOR TRANSAKSI KASIR (POS) UNTUK UJI ALUR REAL-TIME
     ========================================================================== -->
     <div id="pos-simulator-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -656,7 +688,7 @@ posChannel.postMessage({
                 </div>
 
                 <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-1">
-                    <p class="font-semibold text-slate-800">Efek Otomatis (Sesuai Bagian B Flowchart):</p>
+                    <p class="font-semibold text-slate-800">Efek Otomatis:</p>
                     <p>&bull; Stok Gudang berkurang sesuai jumlah terjual.</p>
                     <p>&bull; Stok Display Rak berkurang sesuai jumlah terjual.</p>
                     <p>&bull; Jika Display Rak &le; Batas Minimal, notifikasi pengisian rak muncul.</p>
@@ -734,6 +766,28 @@ posChannel.postMessage({
             }
         ];
 
+        // Penyimpanan utama produk di perangkat (agar hasil tambah/ubah/hapus tetap tersimpan)
+        const PRODUCTS_STORAGE_KEY = 'agristock_products_v1';
+
+        function persistProducts() {
+            try {
+                localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products));
+            } catch (e) {
+                console.warn('Gagal menyimpan master produk:', e);
+            }
+        }
+
+        function restoreProducts() {
+            try {
+                const raw = localStorage.getItem(PRODUCTS_STORAGE_KEY);
+                if (!raw) return;
+                const saved = JSON.parse(raw);
+                if (Array.isArray(saved)) products = saved;
+            } catch (e) {
+                console.warn('Gagal memuat master produk tersimpan:', e);
+            }
+        }
+
         let activityLogs = [
             {
                 time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
@@ -780,6 +834,9 @@ posChannel.postMessage({
             } catch (e) {
                 console.warn('Snapshot ERP gagal disimpan:', e);
             }
+
+            // Simpan master produk sebagai sumber data utama halaman Gudang
+            persistProducts();
 
             document.getElementById('last-sync-time').textContent = new Date().toLocaleTimeString('id-ID', {
                 hour: '2-digit',
@@ -1022,6 +1079,56 @@ posChannel.postMessage({
             refreshAllViews();
             closeProductModal();
             showToast(`"${name}" berhasil disimpan & tampil di sistem kasir!`, 'success');
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Hapus produk (konfirmasi + sinkronisasi ke Kasir & snapshot ERP)    */
+        /* ------------------------------------------------------------------ */
+        let productPendingDelete = null;
+
+        function openDeleteModal(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) {
+                showToast('Produk tidak ditemukan atau sudah dihapus.', 'error');
+                return;
+            }
+            productPendingDelete = product;
+            document.getElementById('delete-product-name').textContent = product.name;
+            document.getElementById('delete-product-sku').textContent = `Kode: ${product.sku}`;
+            document.getElementById('delete-product-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('delete-product-modal').classList.add('hidden');
+            productPendingDelete = null;
+        }
+
+        function confirmDeleteProduct() {
+            if (!productPendingDelete) {
+                showToast('Tidak ada produk yang dipilih untuk dihapus.', 'error');
+                return;
+            }
+
+            const product = productPendingDelete;
+            const before = products.length;
+
+            try {
+                products = products.filter(p => p.id !== product.id);
+                if (products.length === before) {
+                    throw new Error('Produk tidak ditemukan pada penyimpanan.');
+                }
+
+                persistProducts();
+                broadcastCatalogToPOS('PRODUCT_DELETED');
+                closeDeleteModal();
+                refreshAllViews();
+                addLog('delete', `Produk "${product.name}" (${product.sku}) dihapus dari gudang dan katalog kasir.`);
+                showToast(`"${product.name}" berhasil dihapus dari Gudang & Kasir.`, 'success');
+            } catch (e) {
+                console.error('Gagal menghapus produk:', e);
+                showToast('Gagal menghapus produk. Silakan coba lagi.', 'error');
+            }
         }
 
         // Modal Update Stok / Isi Ulang Rak
@@ -1284,6 +1391,9 @@ posChannel.postMessage({
                         <button onclick="openUpdateModal('${p.id}', 'refill-shelf')" class="flex-1 py-2 px-3 ${isShelfLow ? 'bg-amber-500 hover:bg-amber-600 text-slate-950' : 'bg-slate-800 hover:bg-slate-900 text-white'} text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm">
                             <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i> Isi Rak
                         </button>
+                        <button onclick="openDeleteModal('${p.id}')" title="Hapus produk" aria-label="Hapus ${p.name}" class="py-2 px-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold rounded-xl transition flex items-center justify-center">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
                     </div>
                 </div>
                 `;
@@ -1411,6 +1521,7 @@ posChannel.postMessage({
                 if (log.type === 'alert') { badgeColor = 'bg-amber-100 text-amber-800'; label = 'ALERT RAK'; }
                 if (log.type === 'pos') { badgeColor = 'bg-sky-100 text-sky-800'; label = 'POS KASIR'; }
                 if (log.type === 'add') { badgeColor = 'bg-emerald-100 text-emerald-800'; label = 'BARU'; }
+                if (log.type === 'delete') { badgeColor = 'bg-rose-100 text-rose-800'; label = 'HAPUS'; }
 
                 return `
                 <div class="px-5 py-3 flex items-start gap-3 text-xs">
@@ -1497,6 +1608,7 @@ posChannel.postMessage({
 
         // Initialize on Window Load
         window.onload = function() {
+            restoreProducts();
             lucide.createIcons();
             refreshAllViews();
             broadcastCatalogToPOS('WAREHOUSE_BOOT_SYNC');

@@ -38,16 +38,22 @@
 <!-- ================= DASHBOARD ================= -->
 <div id="adminView" class="min-h-screen flex flex-col">
   <header class="bg-agri-950 text-white sticky top-0 z-40 shadow-lg shadow-agri-950/20">
-    <div class="max-w-7xl mx-auto px-4 sm:px-5 py-3 flex items-center justify-between gap-3">
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-agri-400 to-agri-600 flex items-center justify-center">
+    <div class="max-w-7xl mx-auto px-4 sm:px-5 py-3.5 flex items-center justify-between gap-3">
+      <a href="/" class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-agri-400 to-agri-600 flex items-center justify-center shadow-lg shadow-agri-900/40">
           <i data-lucide="sprout" class="w-5 h-5 text-white"></i>
         </div>
         <div>
-          <p class="font-extrabold text-sm leading-none">Agri<span class="text-agri-300">Suite</span> Admin</p>
-          <p class="text-[10px] text-agri-300 mt-1 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Sesi aktif</p>
+          <p class="font-extrabold text-lg leading-none tracking-tight">Agri<span class="text-agri-300">Suite</span></p>
+          <p class="text-[10.5px] text-agri-300 mt-1">ERP · Kasir · Gudang</p>
         </div>
-      </div>
+      </a>
+      <nav class="hidden md:flex items-center gap-1 text-[12.5px] font-semibold">
+        <a href="/page/erp/" class="px-3 py-2 rounded-lg text-agri-100 hover:bg-agri-800 hover:text-white transition">Dashboard ERP</a>
+        <a href="/page/kasir/" class="px-3 py-2 rounded-lg text-agri-100 hover:bg-agri-800 hover:text-white transition">Kasir</a>
+        <a href="/page/gudang/" class="px-3 py-2 rounded-lg text-agri-100 hover:bg-agri-800 hover:text-white transition">Gudang</a>
+        <a href="/page/customer/" class="px-3 py-2 rounded-lg text-agri-300">Toko</a>
+      </nav>
       <div class="flex items-center gap-2">
         <span class="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg bg-agri-900 border border-agri-800 text-[11.5px] font-bold text-agri-100 max-w-[210px]">
           <i data-lucide="shield-check" class="w-3.5 h-3.5 text-agri-300"></i>
@@ -196,7 +202,7 @@
 
   <footer class="border-t border-slate-200 bg-white/80">
     <div class="max-w-7xl mx-auto px-5 py-3 text-[11px] text-slate-500 flex flex-wrap justify-between gap-2">
-      <span>© 2026 AgriSuite Admin · Data demo tersimpan di browser</span>
+      <span>© 2026 AgriSuite</span>
       <span class="font-mono">Halaman admin</span>
     </div>
   </footer>
