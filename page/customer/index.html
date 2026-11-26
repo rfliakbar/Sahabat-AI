@@ -49,9 +49,13 @@
       <a href="/" class="px-3 py-2 rounded-lg text-agri-100 hover:bg-agri-800 hover:text-white transition">Beranda</a>
     </nav>
     <div class="flex items-center gap-2">
-      <a href="/page/admin/" class="hidden sm:inline-flex px-3 py-2 rounded-lg border border-agri-700 text-agri-100 hover:bg-agri-800 text-[12px] font-bold items-center gap-1.5 transition">
-        <i data-lucide="shield" class="w-3.5 h-3.5"></i> Admin
-      </a>
+      <span id="userChip" class="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg bg-agri-900 border border-agri-800 text-[11.5px] font-bold text-agri-100 max-w-[180px]">
+        <i data-lucide="user-round" class="w-3.5 h-3.5 text-agri-300"></i>
+        <span id="userName" class="truncate">Customer</span>
+      </span>
+      <button id="logoutBtn" class="px-2.5 py-2 rounded-lg border border-agri-700 text-agri-200 hover:bg-agri-800 text-[11.5px] font-bold flex items-center gap-1 transition" title="Keluar">
+        <i data-lucide="log-out" class="w-3.5 h-3.5"></i><span class="hidden sm:inline">Keluar</span>
+      </button>
       <button id="cartBtn" class="relative px-4 py-2 rounded-xl bg-agri-400 hover:bg-agri-300 text-agri-950 text-xs font-extrabold flex items-center gap-1.5 transition">
         <i data-lucide="shopping-basket" class="w-4 h-4"></i> Keranjang
         <span id="cartCount" class="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full bg-rose-500 text-white text-[10.5px] font-bold flex items-center justify-center hide">0</span>
@@ -118,6 +122,16 @@
           <button class="px-4 py-2.5 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-sm font-bold transition">Cek</button>
         </form>
         <div id="trackResult" class="mt-4"></div>
+
+        <div class="mt-6">
+          <div class="flex items-end justify-between gap-2">
+            <div>
+              <h3 class="text-[13px] font-extrabold text-agri-950">Pesanan saya</h3>
+              <p class="text-[11.5px] text-slate-500 mt-0.5">Otomatis dari akun <span id="myOrdersEmail" class="font-mono">—</span></p>
+            </div>
+          </div>
+          <div id="myOrders" class="mt-2.5 space-y-2"></div>
+        </div>
       </div>
       <div class="rounded-2xl border border-agri-200 bg-agri-50/70 p-4">
         <div class="flex items-start gap-3">
@@ -179,6 +193,10 @@
         <button id="closeCheckout" class="p-2 rounded-lg hover:bg-slate-100"><i data-lucide="x" class="w-5 h-5 text-slate-500"></i></button>
       </div>
       <form id="checkoutForm" class="mt-4 space-y-3">
+        <label class="block">
+          <span class="text-[11.5px] font-bold text-slate-600">Email (untuk pesanan saya) *</span>
+          <input name="email" type="email" required class="mt-1 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-agri-300 focus:border-agri-400 bg-slate-50">
+        </label>
         <div class="grid sm:grid-cols-2 gap-3">
           <label class="block">
             <span class="text-[11.5px] font-bold text-slate-600">Nama lengkap *</span>
@@ -247,9 +265,19 @@
 <script>
 (function () {
   const S = window.AgriShop;
+  const session = S.requireRole('customer');
+  if (!session) return;
   const state = { cart: new Map(), category: 'Semua', q: '' };
   const $ = (id) => document.getElementById(id);
   const icons = () => window.lucide && window.lucide.createIcons();
+
+  /* akun aktif */
+  $('userName').textContent = session.name || 'Customer';
+  $('userChip').classList.remove('hidden');
+  $('myOrdersEmail').textContent = session.email || '—';
+  $('logoutBtn').onclick = () => {
+    if (confirm('Keluar dari akun ini?')) { S.logoutAll(); location.replace('/page/login/'); }
+  };
 
   function data() { return S.load(); }
 
@@ -382,11 +410,15 @@
   /* ---------- checkout ---------- */
   function openCheckout() {
     if (!cartLines().length) return toast('Keranjang masih kosong', true);
+    const f = $('checkoutForm');
+    if (!f.email.value) f.email.value = session.email || '';
+    if (!f.name.value) f.name.value = session.name || '';
+    if (!f.phone.value) f.phone.value = session.phone || '';
     $('checkoutError').classList.add('hide');
     $('checkoutTotal').textContent = S.rupiah(cartLines().reduce((s, l) => s + l.subtotal, 0));
     $('checkoutOverlay').classList.remove('hide');
     icons();
-    setTimeout(() => $('checkoutForm').name.focus(), 50);
+    setTimeout(() => f.name.focus(), 50);
   }
   function closeCheckout() { $('checkoutOverlay').classList.add('hide'); }
 
@@ -395,13 +427,14 @@
     const f = new FormData(e.target);
     try {
       const order = S.createOrder({
-        customer: { name: f.get('name'), phone: f.get('phone'), address: f.get('address') },
+        customer: { name: f.get('name'), email: f.get('email'), phone: f.get('phone'), address: f.get('address') },
         note: f.get('note'),
         payment: f.get('payment'),
         items: cartLines().map((l) => ({ id: l.id, qty: l.qty }))
       });
       state.cart.clear(); renderCart(); renderGrid(); closeCheckout(); openCart(false);
       e.target.reset();
+      renderMyOrders();
       $('successCode').textContent = order.code;
       $('successSummary').textContent = `${order.items.length} jenis produk · ${S.rupiah(order.total)} · ${order.payment === 'cod' ? 'Bayar di tempat' : 'Transfer bank'}`;
       $('successTrack').dataset.code = order.code;
@@ -450,6 +483,34 @@
     icons();
   });
 
+  /* ---------- pesanan saya ---------- */
+  function renderMyOrders() {
+    const mine = S.ordersOf(session.email, session.phone);
+    $('myOrders').innerHTML = mine.length ? mine.map((o) => {
+      const meta = S.STATUS_META[o.status] || { label: o.status, cls: 'bg-slate-100 text-slate-600 border-slate-200' };
+      return `
+      <button data-mine="${o.code}" class="w-full text-left rounded-xl border border-slate-200 bg-white hover:border-agri-300 px-3.5 py-2.5 transition">
+        <div class="flex items-center justify-between gap-2">
+          <p class="font-mono text-[11px] font-bold text-agri-800">${o.code}</p>
+          <span class="badge border ${meta.cls}">${meta.label}</span>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-1">${new Date(o.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })} · ${o.items.length} produk</p>
+        <p class="text-[12.5px] font-extrabold text-agri-900 mt-0.5">${S.rupiah(o.total)}</p>
+      </button>`;
+    }).join('') : `<div class="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-6 text-center">
+        <i data-lucide="package" class="w-7 h-7 text-slate-300 mx-auto"></i>
+        <p class="mt-2 text-[12px] font-bold text-slate-500">Belum ada pesanan</p>
+        <p class="text-[11px] text-slate-400 mt-0.5">Pesanan dengan email akun Anda akan muncul di sini.</p>
+      </div>`;
+
+    $('myOrders').querySelectorAll('[data-mine]').forEach((b) => b.onclick = () => {
+      $('trackInput').value = b.dataset.mine;
+      $('trackForm').dispatchEvent(new Event('submit'));
+      $('trackResult').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    icons();
+  }
+
   /* ---------- event ---------- */
   $('cartBtn').onclick = () => { openCart(true); icons(); };
   $('closeCart').onclick = () => openCart(false);
@@ -467,8 +528,8 @@
   };
   $('search').addEventListener('input', (e) => { state.q = e.target.value.toLowerCase().trim(); renderGrid(); });
 
-  S.onChange(() => { renderGrid(); renderCart(); });
-  renderChips(); renderGrid(); renderCart(); icons();
+  S.onChange(() => { renderGrid(); renderCart(); renderMyOrders(); });
+  renderChips(); renderGrid(); renderCart(); renderMyOrders(); icons();
 })();
 </script>
 </body>

@@ -10,8 +10,23 @@ Sistem terpadu **AgriSuite** untuk toko saprotan & hasil tani: dashboard ERP, te
 - **Gudang:** <https://sahabat-ai.ridwanfatiya.workers.dev/gudang/>
 - **Toko (Customer):** <https://sahabat-ai.ridwanfatiya.workers.dev/customer/>
 - **Admin:** <https://sahabat-ai.ridwanfatiya.workers.dev/admin/>
+- **Satu pintu masuk (login):** <https://sahabat-ai.ridwanfatiya.workers.dev/login/>
 
-## Halaman Customer & Admin
+## Satu Link, Dua Peran
+
+Semua pengguna masuk lewat **satu tautan: `/login/`**. Sistem login menentukan peran secara otomatis:
+
+| Peran | Cara masuk | Diarahkan ke |
+|---|---|---|
+| **Customer** | Daftar akun baru atau masuk dengan email pribadi | `/page/customer/` |
+| **Admin** | Email khusus toko **`admin@tokotani.id`** + password | `/page/admin/` |
+
+- Password admin demo: **`admin123`**.
+- Email berdomain `@tokotani.id` otomatis dikenali sebagai admin (badge berubah saat email diketik).
+- Customer tidak diizinkan memakai email toko saat mendaftar.
+- Sesi disimpan di `localStorage`, jadi tidak perlu login ulang saat membuka halaman.
+- Guard peran: customer yang membuka `/admin/` dikembalikan ke toko; admin yang membuka `/customer/` dikembalikan ke dashboard.
+- Tombol **Keluar** tersedia di header kedua halaman dan menghapus sesi.
 
 Dua halaman baru dengan data toko yang saling terhubung (produk, stok, dan pesanan) melalui `localStorage` + `BroadcastChannel`.
 
@@ -24,7 +39,7 @@ Dua halaman baru dengan data toko yang saling terhubung (produk, stok, dan pesan
 
 ### Admin — `/page/admin/`
 
-- Login demo: **username `admin`** · **password `admin123`** (disimpan di `sessionStorage`).
+- Login admin lewat `/login/` dengan email **`admin@tokotani.id`** · password **`admin123`**.
 - **Ringkasan:** omzet valid, pesanan baru, omzet hari ini, stok menipis, grafik omzet 7 hari, pesanan terbaru.
 - **Pesanan:** filter status/pencarian, ubah status (Baru → Diproses → Dikirim → Selesai), batalkan (stok dikembalikan).
 - **Produk:** tambah/edit produk, atur harga & stok, aktif/nonaktifkan dari toko.

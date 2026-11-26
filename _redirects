@@ -12,3 +12,5 @@
 /customer/*  /page/customer/:splat  200
 /admin    /page/admin/    301
 /admin/*  /page/admin/:splat  200
+/login    /page/login/    301
+/login/*  /page/login/:splat  200

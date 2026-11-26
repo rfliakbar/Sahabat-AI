@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Masuk — Toko Tani | AgriSuite</title>
+<meta name="description" content="Satu pintu masuk untuk customer dan admin Toko Tani. Masuk atau daftar akun.">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: {
+      fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], mono: ['"JetBrains Mono"', 'monospace'] },
+      colors: { agri: { 50:'#f2fbf5',100:'#e1f7e8',200:'#c4edd2',300:'#96deaf',400:'#5fc684',500:'#38ab63',600:'#278b4d',700:'#216e3f',800:'#1e5835',900:'#1a482d',950:'#0d2718' } }
+    } }
+  };
+</script>
+<style>
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-thumb{background:#96deaf;border-radius:9999px}
+  .field{width:100%;padding:.68rem .85rem;border:1px solid #e2e8f0;border-radius:.8rem;font-size:.875rem;background:#fff;transition:box-shadow .15s,border-color .15s}
+  .field:focus{outline:none;border-color:#5fc684;box-shadow:0 0 0 3px #c4edd2aa}
+  .tabbtn{flex:1;padding:.6rem;border-radius:.7rem;font-size:.8rem;font-weight:800;color:#475569;transition:all .15s}
+  .tabbtn.on{background:#216e3f;color:#fff;box-shadow:0 8px 18px -12px rgb(13 39 24/.7)}
+  .hide{display:none !important}
+  .agri-grad{background:radial-gradient(circle at 20% 15%, #278b4d 0%, #1a482d 45%, #0d2718 100%)}
+  .ring{position:absolute;border-radius:9999px;border:1px solid rgba(150,222,175,.25)}
+</style>
+</head>
+<body class="font-sans text-slate-800 antialiased min-h-screen bg-slate-50">
+
+<div class="min-h-screen grid lg:grid-cols-2">
+
+  <!-- BRAND PANEL -->
+  <aside class="agri-grad text-white relative overflow-hidden p-8 sm:p-12 flex flex-col justify-between hidden lg:flex">
+    <div class="ring w-[420px] h-[420px] -right-24 -top-24"></div>
+    <div class="ring w-[280px] h-[280px] right-16 bottom-10"></div>
+    <div class="ring w-[180px] h-[180px] left-10 bottom-40"></div>
+
+    <div class="relative">
+      <a href="/" class="inline-flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-white/10 border border-white/15 backdrop-blur flex items-center justify-center">
+          <i data-lucide="sprout" class="w-6 h-6 text-agri-300"></i>
+        </div>
+        <div>
+          <p class="font-extrabold text-lg leading-none">Toko <span class="text-agri-300">Tani</span></p>
+          <p class="text-[10.5px] text-agri-200 mt-1">Saprotan &amp; Hasil Tani</p>
+        </div>
+      </a>
+    </div>
+
+    <div class="relative max-w-sm">
+      <h1 class="text-3xl xl:text-4xl font-extrabold leading-tight tracking-tight">
+        Satu pintu,<br><span class="text-agri-300">dua peran.</span>
+      </h1>
+      <p class="mt-3 text-[13.5px] text-agri-100/85 leading-relaxed">
+        Customer berbelanja dan melacak pesanan. Admin mengelola pesanan, stok, dan pelanggan — semua dari tautan yang sama.
+      </p>
+      <div class="mt-6 space-y-2.5 text-[12px] font-semibold">
+        <p class="flex items-center gap-2"><i data-lucide="store" class="w-4 h-4 text-agri-300"></i> Customer: masuk dengan email pribadi</p>
+        <p class="flex items-center gap-2"><i data-lucide="shield-check" class="w-4 h-4 text-agri-300"></i> Admin: email khusus toko <span class="font-mono text-[11px] bg-white/10 border border-white/15 rounded px-1.5 py-0.5">@tokotani.id</span></p>
+      </div>
+    </div>
+
+    <p class="relative text-[11px] text-agri-200/70">© 2026 AgriSuite · Demo statis, data tersimpan di browser Anda.</p>
+  </aside>
+
+  <!-- FORM PANEL -->
+  <main class="flex items-center justify-center p-5 sm:p-8">
+    <div class="w-full max-w-md">
+      <!-- mobile brand -->
+      <div class="lg:hidden text-center mb-6">
+        <div class="w-13 h-13 inline-flex w-12 h-12 rounded-xl bg-agri-950 items-center justify-center">
+          <i data-lucide="sprout" class="w-6 h-6 text-agri-300"></i>
+        </div>
+        <p class="mt-3 font-extrabold text-lg text-agri-950">Toko Tani</p>
+      </div>
+
+      <!-- sudah login -->
+      <div id="resumeCard" class="hide bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+        <div class="flex items-center gap-3">
+          <div id="resumeAvatar" class="w-11 h-11 rounded-full bg-agri-100 border border-agri-200 flex items-center justify-center font-extrabold text-agri-800">A</div>
+          <div class="min-w-0">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Sesi aktif</p>
+            <p id="resumeName" class="font-extrabold text-agri-950 truncate">—</p>
+            <p id="resumeEmail" class="text-[11.5px] text-slate-500 truncate">—</p>
+          </div>
+        </div>
+        <div class="mt-4 grid gap-2">
+          <a id="resumeGo" href="/page/customer/" class="py-2.5 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-sm font-extrabold text-center flex items-center justify-center gap-2 transition">
+            <i data-lucide="arrow-right" class="w-4 h-4"></i> Lanjutkan
+          </a>
+          <button id="resumeLogout" class="py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-[12.5px] font-bold text-slate-600 transition">Keluar &amp; ganti akun</button>
+        </div>
+        <p class="mt-3 text-center text-[11px] text-slate-400">Atau masuk dengan akun lain di bawah.</p>
+      </div>
+
+      <!-- auth card -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 mt-4">
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <h2 class="font-extrabold text-agri-950 text-lg">Masuk ke Toko Tani</h2>
+            <p class="text-[12px] text-slate-500 mt-0.5">Satu akun untuk belanja atau mengelola toko.</p>
+          </div>
+          <span id="roleBadge" class="badge inline-flex items-center gap-1 text-[10.5px] font-extrabold px-2 py-1 rounded-full bg-agri-50 text-agri-700 border border-agri-200">
+            <i data-lucide="user-round" class="w-3 h-3"></i> Customer
+          </span>
+        </div>
+
+        <div class="mt-4 flex gap-1 bg-slate-100 rounded-xl p-1">
+          <button id="tabLogin" class="tabbtn on">Masuk</button>
+          <button id="tabRegister" class="tabbtn">Daftar</button>
+        </div>
+
+        <!-- LOGIN -->
+        <form id="loginForm" class="mt-4 space-y-3">
+          <label class="block">
+            <span class="text-[11.5px] font-bold text-slate-600">Email</span>
+            <input id="loginEmail" name="email" type="email" required autocomplete="email" placeholder="nama@email.com"
+              class="field mt-1">
+            <span class="text-[10.5px] text-slate-400 mt-1 flex items-center gap-1">
+              <i data-lucide="info" class="w-3 h-3"></i> Admin gunakan email khusus toko <span class="font-mono">admin@tokotani.id</span>
+            </span>
+          </label>
+          <label class="block">
+            <span class="text-[11.5px] font-bold text-slate-600">Password</span>
+            <div class="relative mt-1">
+              <input id="loginPassword" name="password" type="password" required autocomplete="current-password" class="field pr-10" placeholder="••••••">
+              <button type="button" id="togglePw" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-slate-100">
+                <i data-lucide="eye" class="w-4 h-4 text-slate-400"></i>
+              </button>
+            </div>
+          </label>
+          <p id="loginError" class="hide text-[11.5px] font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2"></p>
+          <button class="w-full py-3 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-sm font-extrabold transition flex items-center justify-center gap-2">
+            <i data-lucide="log-in" class="w-4 h-4"></i> <span id="loginBtnText">Masuk sebagai customer</span>
+          </button>
+        </form>
+
+        <!-- REGISTER -->
+        <form id="registerForm" class="mt-4 space-y-3 hide">
+          <label class="block">
+            <span class="text-[11.5px] font-bold text-slate-600">Nama lengkap</span>
+            <input name="name" required autocomplete="name" class="field mt-1" placeholder="Contoh: Sutrisno">
+          </label>
+          <div class="grid grid-cols-2 gap-2.5">
+            <label class="block">
+              <span class="text-[11.5px] font-bold text-slate-600">Email</span>
+              <input name="email" type="email" required autocomplete="email" class="field mt-1" placeholder="nama@email.com">
+            </label>
+            <label class="block">
+              <span class="text-[11.5px] font-bold text-slate-600">No. HP</span>
+              <input name="phone" required inputmode="tel" autocomplete="tel" class="field mt-1" placeholder="0812…">
+            </label>
+          </div>
+          <label class="block">
+            <span class="text-[11.5px] font-bold text-slate-600">Password</span>
+            <input name="password" type="password" required minlength="6" autocomplete="new-password" class="field mt-1" placeholder="Minimal 6 karakter">
+          </label>
+          <p id="registerError" class="hide text-[11.5px] font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2"></p>
+          <button class="w-full py-3 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-sm font-extrabold transition flex items-center justify-center gap-2">
+            <i data-lucide="user-plus" class="w-4 h-4"></i> Daftar &amp; mulai belanja
+          </button>
+        </form>
+
+        <div class="mt-4 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5 text-[11px] text-amber-900 leading-relaxed">
+          <b>Akun demo admin:</b> email <span class="font-mono font-bold">admin@tokotani.id</span> · password <span class="font-mono font-bold">admin123</span>.
+          Customer: daftar akun baru dengan email apa pun.
+        </div>
+
+        <a href="/" class="mt-3 block text-center text-[11.5px] font-bold text-slate-500 hover:text-agri-700">← Kembali ke beranda</a>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/page/shop/store.js"></script>
+<script>
+(function () {
+  const S = window.AgriShop;
+  const $ = (id) => document.getElementById(id);
+  const icons = () => window.lucide && window.lucide.createIcons();
+  const params = new URLSearchParams(location.search);
+  const next = params.get('next') || '';
+
+  function show(el, on) { el.classList.toggle('hide', !on); }
+
+  function setError(id, msg) {
+    const el = $(id);
+    if (!msg) { el.classList.add('hide'); el.textContent = ''; return; }
+    el.textContent = msg;
+    el.classList.remove('hide');
+  }
+
+  /* mode tab */
+  function tab(name) {
+    const login = name === 'login';
+    $('tabLogin').classList.toggle('on', login);
+    $('tabRegister').classList.toggle('on', !login);
+    show($('loginForm'), login);
+    show($('registerForm'), !login);
+    setError('loginError', ''); setError('registerError', '');
+    icons();
+  }
+  $('tabLogin').onclick = () => tab('login');
+  $('tabRegister').onclick = () => tab('register');
+
+  /* deteksi email admin */
+  function refreshRole() {
+    const email = ($('loginEmail').value || '').trim();
+    const admin = S.isAdminEmail(email);
+    const badge = $('roleBadge');
+    badge.innerHTML = admin
+      ? '<i data-lucide="shield-check" class="w-3 h-3"></i> Admin toko'
+      : '<i data-lucide="user-round" class="w-3 h-3"></i> Customer';
+    badge.className = 'inline-flex items-center gap-1 text-[10.5px] font-extrabold px-2 py-1 rounded-full border ' +
+      (admin ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-agri-50 text-agri-700 border-agri-200');
+    $('loginBtnText').textContent = admin ? 'Masuk sebagai admin' : 'Masuk sebagai customer';
+    icons();
+  }
+  $('loginEmail').addEventListener('input', refreshRole);
+
+  $('togglePw').onclick = () => {
+    const p = $('loginPassword');
+    p.type = p.type === 'password' ? 'text' : 'password';
+    icons();
+  };
+
+  /* login */
+  $('loginForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    setError('loginError', '');
+    try {
+      const s = S.loginAccount($('loginEmail').value, $('loginPassword').value);
+      go(s.role);
+    } catch (err) { setError('loginError', err.message); }
+  });
+
+  /* register */
+  $('registerForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    setError('registerError', '');
+    const f = new FormData(e.target);
+    try {
+      const acc = S.register({
+        name: f.get('name'), email: f.get('email'), phone: f.get('phone'), password: f.get('password')
+      });
+      go('customer');
+      return acc;
+    } catch (err) { setError('registerError', err.message); }
+  });
+
+  function go(role) {
+    const target = role === 'admin' ? '/page/admin/' : '/page/customer/';
+    if (next && decodeURIComponent(next).indexOf(role === 'admin' ? '/page/admin' : '/page/customer') === 0) {
+      location.replace(decodeURIComponent(next));
+    } else {
+      location.replace(target);
+    }
+  }
+
+  /* sesi aktif */
+  const session = S.getSession();
+  if (session) {
+    show($('resumeCard'), true);
+    $('resumeName').textContent = session.name || (session.role === 'admin' ? 'Admin Toko Tani' : 'Customer');
+    $('resumeEmail').textContent = session.email || '';
+    $('resumeAvatar').textContent = (session.name || '?').trim().charAt(0).toUpperCase();
+    $('resumeGo').href = session.role === 'admin' ? '/page/admin/' : '/page/customer/';
+    $('resumeLogout').onclick = () => { S.logoutAll(); location.reload(); };
+  }
+
+  refreshRole();
+  icons();
+})();
+</script>
+</body>
+</html>

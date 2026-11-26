@@ -35,47 +35,8 @@
 </head>
 <body class="agri-pattern font-sans text-slate-800 antialiased min-h-screen">
 
-<!-- ================= LOGIN ================= -->
-<section id="loginView" class="min-h-screen flex items-center justify-center p-5">
-  <div class="w-full max-w-sm">
-    <div class="text-center mb-6">
-      <div class="w-14 h-14 mx-auto rounded-2xl bg-agri-950 flex items-center justify-center shadow-lg shadow-agri-900/25">
-        <i data-lucide="shield-check" class="w-7 h-7 text-agri-300"></i>
-      </div>
-      <h1 class="mt-4 text-xl font-extrabold text-agri-950">Portal Admin</h1>
-      <p class="text-[12.5px] text-slate-500 mt-1">Kelola pesanan, produk, dan pelanggan Toko Tani.</p>
-    </div>
-
-    <form id="loginForm" class="card p-5 space-y-3">
-      <label class="block">
-        <span class="text-[11.5px] font-bold text-slate-600">Username</span>
-        <input name="username" required autocomplete="username" value="admin"
-          class="mt-1 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-agri-300 focus:border-agri-400">
-      </label>
-      <label class="block">
-        <span class="text-[11.5px] font-bold text-slate-600">Password</span>
-        <div class="relative mt-1">
-          <input name="password" id="password" type="password" required autocomplete="current-password"
-            class="w-full px-3 py-2.5 pr-10 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-agri-300 focus:border-agri-400">
-          <button type="button" id="togglePw" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-slate-100">
-            <i data-lucide="eye" class="w-4 h-4 text-slate-400"></i>
-          </button>
-        </div>
-      </label>
-      <p id="loginError" class="hide text-[12px] font-semibold text-rose-600"></p>
-      <button class="w-full py-3 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-sm font-extrabold transition flex items-center justify-center gap-2">
-        <i data-lucide="log-in" class="w-4 h-4"></i> Masuk
-      </button>
-      <div class="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5 text-[11px] text-amber-800 leading-relaxed">
-        <b>Akun demo:</b> username <span class="font-mono font-bold">admin</span> · password <span class="font-mono font-bold">admin123</span>
-      </div>
-      <a href="/page/customer/" class="block text-center text-[12px] font-bold text-agri-700 hover:text-agri-800 pt-1">← Kembali ke toko</a>
-    </form>
-  </div>
-</section>
-
 <!-- ================= DASHBOARD ================= -->
-<div id="adminView" class="hide min-h-screen flex flex-col">
+<div id="adminView" class="min-h-screen flex flex-col">
   <header class="bg-agri-950 text-white sticky top-0 z-40 shadow-lg shadow-agri-950/20">
     <div class="max-w-7xl mx-auto px-4 sm:px-5 py-3 flex items-center justify-between gap-3">
       <div class="flex items-center gap-2.5">
@@ -88,9 +49,10 @@
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <a href="/page/customer/" class="hidden sm:inline-flex px-3 py-2 rounded-lg border border-agri-700 text-agri-100 hover:bg-agri-800 text-[12px] font-bold items-center gap-1.5 transition">
-          <i data-lucide="store" class="w-3.5 h-3.5"></i> Toko
-        </a>
+        <span class="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg bg-agri-900 border border-agri-800 text-[11.5px] font-bold text-agri-100 max-w-[210px]">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5 text-agri-300"></i>
+          <span id="adminEmail" class="truncate font-mono">admin@tokotani.id</span>
+        </span>
         <button id="logoutBtn" class="px-3 py-2 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-200 text-[12px] font-bold flex items-center gap-1.5 transition">
           <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Keluar
         </button>
@@ -310,32 +272,13 @@
     toast._t = setTimeout(() => el.classList.add('hide'), 2400);
   }
 
-  /* ---------- auth ---------- */
-  function showAdmin(show) {
-    $('loginView').classList.toggle('hide', show);
-    $('adminView').classList.toggle('hide', !show);
-    if (show) { renderAll(); }
-    icons();
-  }
-
-  $('loginForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const f = new FormData(e.target);
-    if (S.login(f.get('username'), f.get('password'))) {
-      $('loginError').classList.add('hide');
-      showAdmin(true);
-    } else {
-      const err = $('loginError');
-      err.textContent = 'Username atau password salah. Gunakan akun demo: admin / admin123.';
-      err.classList.remove('hide');
-    }
-  });
-  $('togglePw').onclick = () => {
-    const p = $('password');
-    p.type = p.type === 'password' ? 'text' : 'password';
-    icons();
+  /* ---------- sesi admin ---------- */
+  const session = S.requireRole('admin');
+  if (!session) return;
+  $('adminEmail').textContent = session.email || S.ADMIN_EMAIL;
+  $('logoutBtn').onclick = () => {
+    if (confirm('Keluar dari portal admin?')) { S.logoutAll(); location.replace('/page/login/'); }
   };
-  $('logoutBtn').onclick = () => { S.logout(); showAdmin(false); };
 
   /* ---------- tabs ---------- */
   function switchTab(name) {
@@ -584,9 +527,9 @@
     }
   };
 
-  S.onChange(() => { if (S.isLoggedIn()) renderAll(); });
+  S.onChange(() => renderAll());
 
-  showAdmin(S.isLoggedIn());
+  renderAll();
   icons();
 })();
 </script>

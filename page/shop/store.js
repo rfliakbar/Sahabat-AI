@@ -7,7 +7,10 @@
 
   const KEY = 'agrisuite_shop_v1';
   const ADMIN_KEY = 'agrisuite_admin_session_v1';
-  const DEMO_ADMIN = { username: 'admin', password: 'admin123' };
+  const ACCOUNTS_KEY = 'agrisuite_accounts_v1';
+  const SESSION_KEY = 'agrisuite_session_v1';
+  const ADMIN_EMAIL = 'admin@tokotani.id';
+  const DEMO_ADMIN = { username: 'admin', email: ADMIN_EMAIL, password: 'admin123' };
 
   const SEED_PRODUCTS = [
     { id: 'PRD-1001', sku: 'BNH-PADI-32', name: 'Benih Padi Unggul Inpari 32 (5kg)', category: 'Benih', price: 75000, unit: 'karung', stock: 42, image: 'https://placehold.co/600x450/278b4d/ffffff?text=Benih+Padi' },
@@ -99,6 +102,7 @@
       code: nextOrderCode(data),
       customer: {
         name: (customer.name || '').trim(),
+        email: (customer.email || '').trim().toLowerCase(),
         phone: (customer.phone || '').trim(),
         address: (customer.address || '').trim()
       },
@@ -239,10 +243,94 @@
   }
   function logout() { sessionStorage.removeItem(ADMIN_KEY); }
 
+  /* ------------------------------------------------------------------ */
+  /* Akun & sesi terpadu (customer + admin)                              */
+  /* ------------------------------------------------------------------ */
+  const hash = (s) => btoa(unescape(encodeURIComponent('agrishop:' + s)));
+
+  function isAdminEmail(email) {
+    return String(email || '').trim().toLowerCase() === ADMIN_EMAIL;
+  }
+
+  function accounts() {
+    try { return JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]'); } catch (e) { return []; }
+  }
+  function saveAccounts(list) { localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(list)); }
+
+  function register({ name, email, phone, password }) {
+    name = (name || '').trim();
+    email = (email || '').trim().toLowerCase();
+    phone = (phone || '').trim();
+    if (!name || !email || !phone || !password) throw new Error('Semua kolom wajib diisi.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Format email tidak valid.');
+    if (password.length < 6) throw new Error('Password minimal 6 karakter.');
+    if (isAdminEmail(email)) throw new Error('Email tersebut khusus admin toko. Silakan masuk lewat tab admin.');
+    const list = accounts();
+    if (list.some((a) => a.email === email)) throw new Error('Email sudah terdaftar. Silakan masuk.');
+    const acc = { name, email, phone, password: hash(password), createdAt: nowIso() };
+    list.push(acc); saveAccounts(list);
+    setSession({ role: 'customer', name, email, phone });
+    return acc;
+  }
+
+  function loginAccount(email, password) {
+    email = (email || '').trim().toLowerCase();
+    if (!email || !password) throw new Error('Email dan password wajib diisi.');
+    if (isAdminEmail(email)) {
+      if (password !== DEMO_ADMIN.password) throw new Error('Password admin salah.');
+      setSession({ role: 'admin', name: 'Admin Toko Tani', email });
+      return { role: 'admin', name: 'Admin Toko Tani', email };
+    }
+    const acc = accounts().find((a) => a.email === email);
+    if (!acc) throw new Error('Email belum terdaftar. Silakan daftar terlebih dahulu.');
+    if (acc.password !== hash(password)) throw new Error('Password salah.');
+    setSession({ role: 'customer', name: acc.name, email: acc.email, phone: acc.phone });
+    return { role: 'customer', name: acc.name, email: acc.email, phone: acc.phone };
+  }
+
+  function setSession(session) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ ...session, at: Date.now() }));
+  }
+  function getSession() {
+    try {
+      const s = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+      return s && s.role ? s : null;
+    } catch (e) { return null; }
+  }
+  function clearSession() { localStorage.removeItem(SESSION_KEY); }
+
+  function logoutAll() { clearSession(); logout(); }
+
+  /** Arahkan ke login bila sesi tidak sesuai; kembalikan sesi aktif. */
+  function requireRole(role, nextPath) {
+    const s = getSession();
+    if (!s) {
+      const next = encodeURIComponent(nextPath || location.pathname);
+      location.replace('/page/login/?next=' + next);
+      return null;
+    }
+    if (role && s.role !== role) {
+      location.replace(s.role === 'admin' ? '/page/admin/' : '/page/customer/');
+      return null;
+    }
+    return s;
+  }
+
+  function ordersOf(email, phone) {
+    const e = String(email || '').toLowerCase();
+    const p = String(phone || '').replace(/\D/g, '');
+    return load().orders.filter((o) => {
+      const oe = (o.customer.email || '').toLowerCase();
+      const op = (o.customer.phone || '').replace(/\D/g, '');
+      return (e && oe === e) || (!oe && p && op === p);
+    });
+  }
+
   global.AgriShop = {
-    KEY, DEMO_ADMIN, SEED_PRODUCTS, STATUS_META,
+    KEY, DEMO_ADMIN, ADMIN_EMAIL, SEED_PRODUCTS, STATUS_META,
     rupiah, load, save, onChange, createOrder, updateOrderStatus,
     upsertProduct, toggleProduct, resetDemo, stats,
-    login, isLoggedIn, logout
+    login, isLoggedIn, logout,
+    isAdminEmail, register, loginAccount, setSession, getSession, clearSession, logoutAll, requireRole, ordersOf
   };
 })(window);
