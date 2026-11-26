@@ -64,20 +64,24 @@ Buka <http://localhost:8080/>. `_redirects` (URL pendek `/erp`, `/kasir`, `/guda
 
 ## Deploy ke Cloudflare
 
-Situs ini di-deploy sebagai **Cloudflare Workers Static Assets** (Pages versi terbaru) langsung dari folder root repo.
+Situs ini di-deploy sebagai **Cloudflare Workers Static Assets** langsung dari folder root repo.
 
-Sekali setup:
+### Otomatis (utama)
 
-```powershell
-npx wrangler login
+Workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) berjalan setiap **push ke `main`** (dan bisa dipicu manual dari tab Actions).
+
+```
+git push origin main  →  GitHub Actions  →  Cloudflare (live ±1 menit)
 ```
 
-Setiap kali ada perubahan:
+Membutuhkan secret repo `CLOUDFLARE_API_TOKEN` (API token Cloudflare dengan izin Workers Scripts: Edit).
+
+### Manual (cadangan)
 
 ```powershell
 npx wrangler deploy --name sahabat-ai
 ```
 
-Konfigurasi ada di `wrangler.jsonc` (asset directory `.`, custom 404 page). File `.assetsignore` mengecualikan `.git` dan konfigurasi deploy dari publik.
+Konfigurasi ada di `wrangler.jsonc` (asset directory `.`, custom 404 page). File `.assetsignore` mengecualikan `.git`, `.github`, `node_modules`, dan konfigurasi deploy dari publik.
 
 Panduan modul ERP selengkapnya: [`page/erp/README.md`](page/erp/README.md).
