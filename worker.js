@@ -278,7 +278,7 @@ function allowedRolesFor(pathname) {
   return null;
 }
 
-function publicProduct(row) {
+function publicProduct(row, catalogUpdatedAt) {
   if (!row) return null;
   return {
     id: row.id,
@@ -290,7 +290,7 @@ function publicProduct(row) {
     stock: Math.max(0, Number(row.stock) || 0),
     image: typeof row.image === "string" ? row.image : "",
     active: row.active !== false,
-    updatedAt: row.updatedAt,
+    updatedAt: row.updatedAt || catalogUpdatedAt,
   };
 }
 
@@ -1139,7 +1139,7 @@ async function handleApi(request, env, url) {
   if (path === "/api/catalog" && method === "GET") {
     const catalog = await store.getCatalog();
     return json({
-      products: catalog.products.map(publicProduct),
+      products: catalog.products.map((product) => publicProduct(product, catalog.updatedAt)),
       updatedAt: catalog.updatedAt,
     });
   }
