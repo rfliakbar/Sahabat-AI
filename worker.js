@@ -377,6 +377,8 @@ export class AuthStore extends DurableObject {
         "ALTER TABLE shop_orders ADD COLUMN payment_status TEXT NOT NULL DEFAULT 'belum_dibayar'",
         "ALTER TABLE shop_orders ADD COLUMN channel TEXT NOT NULL DEFAULT 'toko'",
         "ALTER TABLE shop_orders ADD COLUMN client_id TEXT",
+        "ALTER TABLE customers ADD COLUMN customer_type TEXT NOT NULL DEFAULT 'online'",
+        "ALTER TABLE customers ADD COLUMN address TEXT NOT NULL DEFAULT ''",
       ]) {
         try { this.ctx.storage.sql.exec(sql); } catch { /* kolom sudah ada */ }
       }
@@ -398,9 +400,19 @@ export class AuthStore extends DurableObject {
           items TEXT NOT NULL,
           cashier TEXT,
           source TEXT NOT NULL DEFAULT 'kasir',
-          created_at INTEGER NOT NULL
+          created_at INTEGER NOT NULL,
+          customer_id TEXT,
+          customer_name TEXT NOT NULL DEFAULT '',
+          customer_phone TEXT NOT NULL DEFAULT ''
         )
       `);
+      for (const sql of [
+        "ALTER TABLE pos_sales ADD COLUMN customer_id TEXT",
+        "ALTER TABLE pos_sales ADD COLUMN customer_name TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE pos_sales ADD COLUMN customer_phone TEXT NOT NULL DEFAULT ''",
+      ]) {
+        try { this.ctx.storage.sql.exec(sql); } catch { /* kolom sudah ada */ }
+      }
       await this.seedOwner();
     });
   }
@@ -775,6 +787,7 @@ export class AuthStore extends DurableObject {
       lines.push({
         id: p.id,
         name: p.name,
+        category: p.category || "Lainnya",
         price: p.price,
         qty,
         unit: p.unit,
@@ -856,6 +869,13 @@ export class AuthStore extends DurableObject {
       .toArray()[0];
     if (existing) return { ok: true, sale: this.posSaleFromRow(existing), duplicate: true };
 
+    const customerId = cleanText(input.customer && input.customer.id, 120) || null;
+    let customer = null;
+    if (customerId) {
+      customer = this.ctx.storage.sql.exec("SELECT id, name, phone FROM customers WHERE id = ? LIMIT 1", customerId).toArray()[0];
+      if (!customer) return { ok: false, error: "Pelanggan kasir tidak ditemukan." };
+    }
+
     const { products } = await this.getCatalog();
     const requested = new Map();
     for (const it of Array.isArray(input.items) ? input.items : []) {
@@ -871,7 +891,7 @@ export class AuthStore extends DurableObject {
       const p = products.find((x) => x.sku === sku || x.id === sku);
       if (!p || p.active === false) return { ok: false, error: "Produk kasir tidak ditemukan: " + sku };
       if (p.stock < qty) return { ok: false, error: `Stok ${p.name} hanya ${p.stock}` };
-      lines.push({ sku: p.sku || p.id, id: p.id, name: p.name, price: p.price, qty, subtotal: p.price * qty });
+      lines.push({ sku: p.sku || p.id, id: p.id, name: p.name, category: p.category || "Lainnya", price: p.price, qty, subtotal: p.price * qty });
     }
 
     const subtotal = lines.reduce((sum, l) => sum + l.subtotal, 0);
@@ -894,6 +914,8 @@ export class AuthStore extends DurableObject {
     await this.setCatalog(products);
 
     const payment = input.payment === "qris" ? "qris" : "cash";
+    const customerName = customer ? customer.name : cleanText(input.customer && input.customer.name, 100);
+    const customerPhone = customer ? customer.phone : cleanText(input.customer && input.customer.phone, 30);
     const now = Date.now();
     const sale = {
       id: "pos_" + crypto.randomUUID(),
@@ -906,14 +928,17 @@ export class AuthStore extends DurableObject {
       tax,
       total,
       items: lines,
+      customerId,
+      customerName,
+      customerPhone,
       cashier: user ? user.name : "Kasir",
       source: "kasir",
       createdAt: new Date(now).toISOString(),
     };
     this.ctx.storage.sql.exec(
       `INSERT INTO pos_sales
-        (id, client_id, invoice, payment, payment_label, subtotal, discount, tax, total, items, cashier, source, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'kasir', ?)`,
+        (id, client_id, invoice, payment, payment_label, subtotal, discount, tax, total, items, cashier, source, created_at, customer_id, customer_name, customer_phone)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'kasir', ?, ?, ?, ?)`,
       sale.id,
       sale.clientId,
       sale.invoice,
@@ -926,6 +951,9 @@ export class AuthStore extends DurableObject {
       JSON.stringify(lines),
       sale.cashier,
       now,
+      customerId,
+      customerName,
+      customerPhone,
     );
     return { ok: true, sale };
   }
@@ -945,8 +973,50 @@ export class AuthStore extends DurableObject {
       items: safeJsonArray(row.items),
       cashier: row.cashier,
       source: row.source,
+      customerId: row.customer_id || null,
+      customerName: row.customer_name || "",
+      customerPhone: row.customer_phone || "",
       createdAt: new Date(row.created_at).toISOString(),
     };
+  }
+
+  async listPosCustomers() {
+    const customers = this.ctx.storage.sql.exec(
+      `SELECT c.id, c.name, c.email, c.phone, c.address, c.customer_type, c.created_at,
+        (SELECT COUNT(*) FROM shop_orders o WHERE o.email = c.email OR (c.phone <> '' AND o.phone = c.phone)) AS online_orders,
+        (SELECT COALESCE(SUM(total), 0) FROM shop_orders o WHERE o.email = c.email OR (c.phone <> '' AND o.phone = c.phone)) AS online_total,
+        (SELECT COUNT(*) FROM pos_sales p WHERE p.customer_id = c.id) AS pos_orders,
+        (SELECT COALESCE(SUM(total), 0) FROM pos_sales p WHERE p.customer_id = c.id) AS pos_total
+       FROM customers c ORDER BY c.created_at DESC LIMIT 1000`
+    ).toArray();
+    const orders = this.ctx.storage.sql.exec("SELECT email, phone, items FROM shop_orders ORDER BY created_at DESC LIMIT 1000").toArray();
+    const sales = this.ctx.storage.sql.exec("SELECT customer_id, items FROM pos_sales ORDER BY created_at DESC LIMIT 2000").toArray();
+    const catalog = await this.getCatalog();
+    const categoryById = new Map(catalog.products.map((p) => [p.id, p.category || "Lainnya"]));
+    return customers.map((c) => ({
+      id: c.id, name: c.name, email: c.email || "", phone: c.phone || "", address: c.address || "",
+      type: c.customer_type || "online", onlineOrders: c.online_orders || 0, posOrders: c.pos_orders || 0,
+      totalSpent: (c.online_total || 0) + (c.pos_total || 0),
+      interests: [...new Set([
+        ...orders.filter((o) => (c.email && o.email === c.email) || (c.phone && o.phone === c.phone)).flatMap((o) => safeJsonArray(o.items).map((i) => i.category || categoryById.get(i.id)).filter(Boolean)),
+        ...sales.filter((s) => s.customer_id === c.id).flatMap((s) => safeJsonArray(s.items).map((i) => i.category || categoryById.get(i.id)).filter(Boolean)),
+      ])],
+    }));
+  }
+
+  async createPosCustomer(input) {
+    const name = cleanText(input.name, 100);
+    const phone = cleanText(input.phone, 30);
+    if (!name || !phone) return { ok: false, error: "Nama dan nomor telepon wajib diisi." };
+    const id = "offline_" + crypto.randomUUID();
+    const email = `offline+${crypto.randomUUID()}@local.invalid`;
+    const now = Date.now();
+    this.ctx.storage.sql.exec(
+      `INSERT INTO customers (id, name, email, phone, password_hash, active, created_at, updated_at, customer_type, address)
+       VALUES (?, ?, ?, ?, ?, 1, ?, ?, 'offline', ?)`,
+      id, name, email, phone, await hashPassword(bytesToBase64Url(crypto.getRandomValues(new Uint8Array(32)))), now, now, cleanText(input.address, 300),
+    );
+    return { ok: true, customer: (await this.listPosCustomers()).find((c) => c.id === id) };
   }
 
   async setPaymentStatus(id, status) {
@@ -1167,6 +1237,21 @@ async function handleApi(request, env, url) {
     if (!result.ok) return json({ error: result.error }, 400);
     await store.log(user, "POS_SALE", `${result.sale.invoice || result.sale.id} (${result.sale.total})`);
     return json({ sale: result.sale, duplicate: Boolean(result.duplicate) }, result.duplicate ? 200 : 201);
+  }
+
+  if (path === "/api/customers" && method === "GET") {
+    const { response } = await requireRole(request, env, ["owner", "cashier"]);
+    if (response) return response;
+    return json({ customers: await store.listPosCustomers() });
+  }
+
+  if (path === "/api/customers" && method === "POST") {
+    const { user, response } = await requireRole(request, env, ["owner", "cashier"]);
+    if (response) return response;
+    const result = await store.createPosCustomer(await readJson(request));
+    if (!result.ok) return json({ error: result.error }, 400);
+    await store.log(user, "CUSTOMER_OFFLINE_CREATE", result.customer.name);
+    return json({ customer: result.customer }, 201);
   }
 
   /* ---------------- Pesanan Toko ---------------- */
