@@ -818,20 +818,72 @@ posChannel.postMessage({
             return 'Lainnya';
         }
 
-        // Dorong katalog ke backend bersama agar Toko (/toko/) ikut terbarui.
+        // Dorong katalog ke backend bersama agar Toko dan Kasir memakai sumber yang sama.
+        // Kategori/satuan yang sudah ada dipertahankan agar tidak hilang saat sinkron dari Gudang.
+        let catalogPushQueue = Promise.resolve();
         function pushCatalogToBackend(items) {
-            if (!window.AgriShop || typeof window.AgriShop.pushCatalog !== 'function') return;
-            window.AgriShop.pushCatalog(items.map((p) => ({
-                id: p.id,
-                sku: p.sku,
-                name: p.name,
-                category: inferCategory(p.name),
-                price: p.price,
-                unit: 'unit',
-                stock: p.availableStock,
-                image: p.image,
-                active: true
-            })));
+            catalogPushQueue = catalogPushQueue.then(async () => {
+                try {
+                    const currentRes = await fetch('/api/catalog', { credentials: 'same-origin' });
+                    const current = currentRes.ok ? await currentRes.json() : { products: [] };
+                    const byId = new Map((current.products || []).map(p => [p.id, p]));
+                    const payload = items.map(p => {
+                        const old = byId.get(p.id) || {};
+                        return {
+                            id: p.id,
+                            sku: p.sku,
+                            name: p.name,
+                            category: old.category || inferCategory(p.name),
+                            price: p.price,
+                            unit: old.unit || 'unit',
+                            stock: p.availableStock,
+                            image: p.image,
+                            active: p.active !== false
+                        };
+                    });
+                    const res = await fetch('/api/catalog', {
+                        method: 'PUT',
+                        credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ products: payload })
+                    });
+                    if (!res.ok) throw new Error('Status ' + res.status);
+                } catch (e) {
+                    console.warn('Gagal menyinkronkan katalog ke backend:', e);
+                }
+            });
+            return catalogPushQueue;
+        }
+
+        /** Ambil stok terbaru dari backend (termasuk pesanan Toko & penjualan Kasir). */
+        async function syncFromBackendCatalog() {
+            try {
+                const res = await fetch('/api/catalog', { credentials: 'same-origin' });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!Array.isArray(data.products) || !data.products.length) return;
+                const byId = new Map(products.map(p => [p.id, p]));
+                products = data.products.map(p => {
+                    const old = byId.get(p.id);
+                    const stock = Math.max(0, Number(p.stock) || 0);
+                    return {
+                        id: p.id,
+                        sku: p.sku || p.id,
+                        name: p.name,
+                        price: Number(p.price) || 0,
+                        image: p.image || (old && old.image) || '',
+                        warehouseStock: stock,
+                        shelfMax: old ? old.shelfMax : 20,
+                        shelfMin: old ? old.shelfMin : 5,
+                        shelfCurrent: old ? Math.min(Number(old.shelfCurrent) || 0, stock) : Math.min(stock, 10),
+                        updatedAt: old ? old.updatedAt : new Date().toISOString()
+                    };
+                });
+                persistProducts();
+                refreshAllViews();
+            } catch (e) {
+                console.warn('Katalogbackend belum tersedia:', e);
+            }
         }
 
         // Kirim pembaruan katalog & stok ke sistem kasir setiap kali ada perubahan di gudang
@@ -1638,8 +1690,9 @@ posChannel.postMessage({
         }
 
         // Initialize on Window Load
-        window.onload = function() {
+        window.onload = async function() {
             restoreProducts();
+            await syncFromBackendCatalog();
             lucide.createIcons();
             refreshAllViews();
             broadcastCatalogToPOS('WAREHOUSE_BOOT_SYNC');

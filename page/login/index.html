@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Masuk — Toko Tani | AgriSuite</title>
-<meta name="description" content="Satu pintu masuk untuk customer dan admin Toko Tani. Masuk atau daftar akun.">
+<title>Masuk — Toko Mertani | AgriSuite</title>
+<meta name="description" content="Satu pintu masuk untuk customer dan admin Toko Mertani. Masuk atau daftar akun.">
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -292,7 +292,7 @@
   const session = S.getSession();
   if (session) {
     show($('resumeCard'), true);
-    $('resumeName').textContent = session.name || (session.role === 'admin' ? 'Admin Toko Tani' : 'Customer');
+    $('resumeName').textContent = session.name || (session.role === 'admin' ? 'Admin Toko Mertani' : 'Customer');
     $('resumeEmail').textContent = session.email || '';
     $('resumeAvatar').textContent = (session.name || '?').trim().charAt(0).toUpperCase();
     $('resumeGo').href = session.redirect || LANDING[session.role] || '/toko/';

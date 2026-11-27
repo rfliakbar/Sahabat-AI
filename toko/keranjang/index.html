@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Keranjang Belanja — Toko Mertani</title>
+  <meta name="description" content="Kelola keranjang belanja Toko Mertani tanpa login.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/toko/assets/store.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="/toko/assets/storefront.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <div class="header-inner">
+        <a class="brand" href="/toko/"><img src="/toko/assets/logo-mertani.png" alt="Logo Toko Mertani"><span class="brand-text"><strong>Toko Mertani</strong><span>Saprotan &amp; Hasil Tani</span></span></a>
+        <nav class="main-nav"><a href="/toko/">Home</a><a href="/toko/#produk">Produk</a><a href="/toko/#tentang">Tentang Kami</a></nav>
+        <div class="header-actions">
+          <a class="icon-btn" href="/toko/akun/" title="Akun pelanggan" aria-label="Akun pelanggan"><i data-lucide="user-round" width="19" height="19"></i></a>
+          <a class="icon-btn" href="/toko/keranjang/" title="Keranjang belanja" aria-label="Keranjang belanja"><i data-lucide="shopping-cart" width="19" height="19"></i><span class="cart-badge hide" data-cart-count>0</span></a>
+          <button class="icon-btn menu-btn" type="button" data-menu-btn aria-label="Buka menu"><i data-lucide="menu" width="19" height="19"></i></button>
+        </div>
+      </div>
+      <nav class="mobile-nav hide" data-mobile-nav><a href="/toko/">Home</a><a href="/toko/#produk">Produk</a><a href="/toko/#tentang">Tentang Kami</a><a href="/toko/akun/">Akun Saya</a></nav>
+    </div>
+  </header>
+
+  <section class="page-head">
+    <div class="container"><span class="eyebrow"><i data-lucide="shopping-cart" width="14" height="14"></i> Keranjang</span><h1>Keranjang belanja</h1><p>Periksa pesanan Anda. Keranjang tetap tersimpan walau belum login.</p></div>
+  </section>
+
+  <main class="section">
+    <div class="container cart-layout">
+      <section class="panel" id="cartPanel"><div class="panel-pad" id="cartLines">Memuat keranjang...</div></section>
+      <aside class="panel panel-pad" id="summaryPanel">
+        <h2 style="margin:0 0 14px;font-size:17px;">Ringkasan belanja</h2>
+        <div class="summary-row"><span>Jumlah barang</span><strong id="summaryItems">0</strong></div>
+        <div class="summary-row"><span>Total sementara</span><strong id="summaryTotal">Rp 0</strong></div>
+        <div id="summaryAlert"></div>
+        <p class="hint">Harga dan stok akan diverifikasi ulang saat checkout oleh backend toko.</p>
+        <a class="btn btn-primary btn-block" id="checkoutBtn" href="/toko/checkout/"><i data-lucide="arrow-right" width="16" height="16"></i> Lanjut ke Checkout</a>
+        <a class="btn btn-ghost btn-block" style="margin-top:10px;" href="/toko/#produk">Lanjut belanja</a>
+        <div class="alert alert-info" style="margin-top:16px;">Login hanya diperlukan saat checkout. Riwayat pesanan tersedia setelah login.</div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div><div class="footer-brand"><img src="/toko/assets/logo-mertani.png" alt="Logo Toko Mertani"><strong>Toko Mertani</strong></div><p>Katalog digital dan toko online untuk kebutuhan pertanian.</p></div>
+        <div><h4>Navigasi</h4><p><a href="/toko/">Home</a><br><a href="/toko/#produk">Produk</a><br><a href="/toko/#tentang">Tentang Kami</a></p></div>
+        <div><h4>Alamat</h4><p>FRXF+V8P, Jalan Raya, Pasuruan, Ngadisono, Kec. Kaliwiro, Kabupaten Wonosobo, Jawa Tengah 56364.</p></div>
+      </div>
+      <div class="footer-bottom"><span>© PT. MERTANI ID.</span><span>All Rights Reserved. <span data-year>2026</span></span></div>
+    </div>
+  </footer>
+  <div class="toast-wrap"></div>
+
+  <script>
+  (function () {
+    'use strict';
+    var M = window.Mertani;
+
+    function render(lines) {
+      var wrap = document.getElementById('cartLines');
+      if (!lines.length) {
+        wrap.innerHTML = '<div class="empty-state"><i data-lucide="shopping-bag" width="34" height="34"></i><p style="margin:12px 0 16px;">Keranjang Anda masih kosong.</p><a class="btn btn-primary" href="/toko/#produk">Lihat Produk</a></div>';
+        M.icons();
+      } else {
+        wrap.innerHTML = lines.map(function (l) {
+          var issue = l.issue ? '<div class="alert ' + (l.available ? 'alert-warning' : 'alert-error') + '" style="margin-top:8px;">' + M.esc(l.issue) + '</div>' : '';
+          return '<div class="cart-line">' +
+            '<img src="' + M.esc(M.imageOf(l.product || l.snapshot)) + '" alt="' + M.esc(l.name) + '">' +
+            '<div><h3>' + M.esc(l.name) + '</h3>' +
+              '<div class="sub">' + M.money(l.price) + ' / ' + M.esc((l.product && l.product.unit) || l.snapshot.unit || 'unit') + '</div>' +
+              '<div style="margin-top:8px;" class="qty">' +
+                '<button type="button" data-dec="' + M.esc(l.id) + '" aria-label="Kurangi">−</button>' +
+                '<input value="' + l.qty + '" readonly aria-label="Jumlah">' +
+                '<button type="button" data-inc="' + M.esc(l.id) + '" aria-label="Tambah">+</button>' +
+              '</div>' + issue +
+            '</div>' +
+            '<div class="line-total"><strong>' + M.money(l.lineTotal) + '</strong><button class="link-danger" style="margin-top:8px;" type="button" data-remove="' + M.esc(l.id) + '">Hapus</button></div>' +
+          '</div>';
+        }).join('');
+        M.icons();
+      }
+      var totals = M.cartTotals(lines);
+      document.getElementById('summaryItems').textContent = String(totals.items);
+      document.getElementById('summaryTotal').textContent = M.money(totals.total);
+      var btn = document.getElementById('checkoutBtn');
+      var alertBox = document.getElementById('summaryAlert');
+      if (!lines.length) {
+        btn.classList.add('hide');
+        alertBox.innerHTML = '';
+      } else {
+        btn.classList.remove('hide');
+        if (totals.blocked) {
+          btn.classList.add('hide');
+          alertBox.innerHTML = '<div class="alert alert-error" style="margin:12px 0;">Sesuaikan jumlah atau hapus produk yang tidak tersedia sebelum checkout.</div>';
+        } else {
+          alertBox.innerHTML = '';
+        }
+      }
+    }
+
+    function refresh() {
+      M.fetchCatalog().then(function (products) {
+        render(M.cartLines(products));
+      }).catch(function () {
+        render(M.cartLines([]));
+        M.toast('Katalog belum dapat dimuat.', 'error');
+      });
+    }
+
+    document.addEventListener('click', function (e) {
+      var inc = e.target.closest('[data-inc]');
+      if (inc) { M.updateQty(inc.getAttribute('data-inc'), M.getCart().find(function (i) { return i.id === inc.getAttribute('data-inc'); }).qty + 1); refresh(); return; }
+      var dec = e.target.closest('[data-dec]');
+      if (dec) { M.updateQty(dec.getAttribute('data-dec'), M.getCart().find(function (i) { return i.id === dec.getAttribute('data-dec'); }).qty - 1); refresh(); return; }
+      var rem = e.target.closest('[data-remove]');
+      if (rem) { M.removeFromCart(rem.getAttribute('data-remove')); M.toast('Produk dihapus dari keranjang.'); refresh(); }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () { M.initShared(); refresh(); });
+  })();
+  </script>
+</body>
+</html>

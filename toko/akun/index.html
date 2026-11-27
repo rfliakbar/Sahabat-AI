@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Akun Saya — Toko Mertani</title>
+  <meta name="description" content="Profil dan riwayat pesanan pelanggan Toko Mertani.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/toko/assets/store.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="/toko/assets/storefront.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <div class="header-inner">
+        <a class="brand" href="/toko/"><img src="/toko/assets/logo-mertani.png" alt="Logo Toko Mertani"><span class="brand-text"><strong>Toko Mertani</strong><span>Saprotan &amp; Hasil Tani</span></span></a>
+        <nav class="main-nav"><a href="/toko/">Home</a><a href="/toko/#produk">Produk</a><a href="/toko/#tentang">Tentang Kami</a></nav>
+        <div class="header-actions">
+          <a class="icon-btn" href="/toko/akun/" title="Akun pelanggan" aria-label="Akun pelanggan"><i data-lucide="user-round" width="19" height="19"></i></a>
+          <a class="icon-btn" href="/toko/keranjang/" title="Keranjang belanja" aria-label="Keranjang belanja"><i data-lucide="shopping-cart" width="19" height="19"></i><span class="cart-badge hide" data-cart-count>0</span></a>
+          <button class="icon-btn menu-btn" type="button" data-menu-btn aria-label="Buka menu"><i data-lucide="menu" width="19" height="19"></i></button>
+        </div>
+      </div>
+      <nav class="mobile-nav hide" data-mobile-nav><a href="/toko/">Home</a><a href="/toko/#produk">Produk</a><a href="/toko/#tentang">Tentang Kami</a><a href="/toko/akun/">Akun Saya</a><a href="/toko/keranjang/">Keranjang</a></nav>
+    </div>
+  </header>
+
+  <section class="page-head">
+    <div class="container"><span class="eyebrow"><i data-lucide="user-round" width="14" height="14"></i> Pelanggan</span><h1>Akun saya</h1><p>Profil pelanggan, riwayat pesanan, dan status terkini.</p></div>
+  </section>
+
+  <main class="section">
+    <div class="container">
+      <div class="cart-layout">
+        <div class="stack">
+          <section class="panel panel-pad">
+            <div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap;">
+              <div><h2 style="margin:0 0 6px;font-size:18px;" id="profileName">Pelanggan</h2><p style="margin:0;color:var(--muted);font-size:13px;" id="profileEmail">-</p></div>
+              <button class="btn btn-ghost btn-sm" type="button" id="logoutBtn"><i data-lucide="log-out" width="14" height="14"></i> Keluar</button>
+            </div>
+            <div class="info-row" style="margin-top:16px;"><i data-lucide="phone" width="17" height="17"></i><div><strong>Nomor HP</strong><span id="profilePhone">-</span></div></div>
+            <div class="info-row"><i data-lucide="shield-check" width="17" height="17"></i><div><strong>Hak akses</strong>Pelanggan toko — tidak memiliki akses dashboard internal.</div></div>
+          </section>
+
+          <section class="panel panel-pad" id="ordersSection">
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+              <h2 style="margin:0;font-size:18px;">Riwayat pesanan</h2>
+              <input class="input" id="orderSearch" style="max-width:260px;" placeholder="Cari nomor pesanan">
+            </div>
+            <div id="orderList">Memuat pesanan...</div>
+          </section>
+        </div>
+
+        <aside class="panel panel-pad" style="position:sticky;top:96px;">
+          <h2 style="margin:0 0 12px;font-size:17px;">Butuh produk lagi?</h2>
+          <p style="font-size:13px;color:var(--muted);">Katalog dapat diakses kapan saja tanpa login.</p>
+          <a class="btn btn-primary btn-block" href="/toko/#produk">Lihat Semua Produk</a>
+          <a class="btn btn-ghost btn-block" style="margin-top:10px;" href="/toko/keranjang/">Buka Keranjang</a>
+          <div class="alert alert-info" style="margin-top:18px;">Status pesanan diperbarui oleh staf toko. Status pembayaran tidak otomatis lunas dari website.</div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div><div class="footer-brand"><img src="/toko/assets/logo-mertani.png" alt="Logo Toko Mertani"><strong>Toko Mertani</strong></div><p>Katalog digital dan toko online untuk kebutuhan pertanian.</p></div>
+        <div><h4>Navigasi</h4><p><a href="/toko/">Home</a><br><a href="/toko/#produk">Produk</a><br><a href="/toko/akun/">Akun Saya</a></p></div>
+        <div><h4>Alamat</h4><p>FRXF+V8P, Jalan Raya, Pasuruan, Ngadisono, Kec. Kaliwiro, Kabupaten Wonosobo, Jawa Tengah 56364.</p></div>
+      </div>
+      <div class="footer-bottom"><span>© PT. MERTANI ID.</span><span>All Rights Reserved. <span data-year>2026</span></span></div>
+    </div>
+  </footer>
+  <div class="toast-wrap"></div>
+
+  <script>
+  (function () {
+    'use strict';
+    var M = window.Mertani;
+    var orders = [];
+    var label = {
+      baru: 'Baru', diproses: 'Diproses', dikirim: 'Dikirim', selesai: 'Selesai', batal: 'Dibatalkan',
+      belum_dibayar: 'Belum dibayar', menunggu_verifikasi: 'Menunggu verifikasi', lunas: 'Lunas', gagal: 'Gagal'
+    };
+
+    function badge(text, kind) {
+      return '<span class="badge badge-' + (kind || 'green') + '">' + M.esc(text) + '</span>';
+    }
+
+    function renderOrders() {
+      var q = document.getElementById('orderSearch').value.trim().toLowerCase();
+      var list = orders.filter(function (o) { return !q || String(o.code).toLowerCase().indexOf(q) !== -1; });
+      var wrap = document.getElementById('orderList');
+      if (!list.length) {
+        wrap.innerHTML = '<div class="empty-state">Belum ada pesanan yang cocok.</div>';
+        return;
+      }
+      wrap.innerHTML = list.map(function (o) {
+        var statusClass = o.status === 'batal' ? 'gray' : (o.status === 'selesai' ? 'blue' : 'green');
+        var payClass = o.paymentStatus === 'lunas' ? 'green' : (o.paymentStatus === 'gagal' ? 'gray' : 'amber');
+        var date = new Date(o.createdAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+        return '<article class="order-card">' +
+          '<div class="order-top"><div><span class="order-code">' + M.esc(o.code) + '</span><br><span class="hint">' + M.esc(date) + '</span></div>' +
+            '<div style="display:flex;gap:6px;flex-wrap:wrap;">' + badge(label[o.status] || o.status, statusClass) + badge(label[o.paymentStatus] || o.paymentStatus, payClass) + '</div>' +
+          '</div>' +
+          '<div class="summary-row" style="margin-top:10px;"><span>Metode pembayaran</span><strong>' + M.esc(o.payment === 'transfer' ? 'Transfer Bank' : 'Bayar di Tempat') + '</strong></div>' +
+          '<div class="summary-row"><span>Total</span><strong style="color:var(--green-dark);">' + M.money(o.total) + '</strong></div>' +
+          '<div class="order-items">' + (o.items || []).map(function (i) { return M.esc(i.name) + ' × ' + i.qty; }).join(' · ') + '</div>' +
+        '</article>';
+      }).join('');
+    }
+
+    document.getElementById('orderSearch').addEventListener('input', renderOrders);
+    document.getElementById('logoutBtn').addEventListener('click', async function () {
+      try { await M.api('/api/auth/logout', { method: 'POST' }); } catch (e) { /* abaikan */ }
+      localStorage.removeItem('agrisuite_session_v1');
+      location.replace('/toko/');
+    });
+
+    document.addEventListener('DOMContentLoaded', async function () {
+      M.initShared();
+      try {
+        var user = await M.fetchMe();
+        if (!user) { location.replace('/toko/login/?next=' + encodeURIComponent('/toko/akun/')); return; }
+        document.getElementById('profileName').textContent = user.name || 'Pelanggan';
+        document.getElementById('profileEmail').textContent = user.email || '-';
+        document.getElementById('profilePhone').textContent = user.phone || '-';
+        orders = await M.fetchOrders();
+        renderOrders();
+      } catch (err) {
+        document.getElementById('orderList').innerHTML = '<div class="alert alert-error">Riwayat pesanan belum dapat dimuat.</div>';
+      }
+    });
+  })();
+  </script>
+</body>
+</html>

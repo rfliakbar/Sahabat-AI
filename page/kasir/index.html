@@ -682,19 +682,63 @@
             showToast('Meminta sinkronisasi data terbaru dari Gudang...', 'info');
         }
 
+        /** Katalog backend adalah sumber bersama; Gudang dan Toko memakai data yang sama. */
+        async function loadBackendCatalog() {
+            try {
+                const res = await fetch('/api/catalog', { credentials: 'same-origin' });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!Array.isArray(data.products) || !data.products.length) return;
+                const shelfById = new Map(catalogProducts.map(p => [p.id, p.shelfStock]));
+                catalogProducts = data.products.map(p => ({
+                    id: p.id,
+                    sku: p.sku || p.id,
+                    name: p.name,
+                    price: Number(p.price) || 0,
+                    image: p.image || '',
+                    availableStock: Math.max(0, Number(p.stock) || 0),
+                    shelfStock: Math.min(
+                        Math.max(0, Number(p.stock) || 0),
+                        shelfById.has(p.id) ? Number(shelfById.get(p.id)) || 0 : Math.min(Number(p.stock) || 0, 10)
+                    )
+                }));
+                cart.forEach(item => {
+                    const updated = catalogProducts.find(p => p.sku === item.sku);
+                    if (updated) {
+                        item.maxStock = updated.availableStock;
+                        item.price = updated.price;
+                        item.name = updated.name;
+                        if (item.qty > item.maxStock) item.qty = item.maxStock;
+                    }
+                });
+                cart = cart.filter(i => i.qty > 0);
+                renderCatalog();
+                renderCart();
+                document.getElementById('sync-last-time').textContent = new Date().toLocaleTimeString('id-ID', {
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                });
+            } catch (e) {
+                console.warn('Katalog backend tidak tersedia:', e);
+            }
+        }
+
         // Kirim data penjualan kasir ke Gudang agar stok gudang & rak berkurang otomatis
         // + simpan ke antrean ERP agar laporan tetap utuh walau dashboard ERP sedang tertutup
-        function notifyWarehouseOfSale(soldItems) {
-            let summary = null;
-            try { summary = getCalculationSummary(); } catch (e) { summary = null; }
+        function notifyWarehouseOfSale(soldItems, paymentMethod, summary) {
+            const calc = summary || getCalculationSummary();
+            const paymentCode = String(paymentMethod || '').toLowerCase().includes('qris') ? 'qris' : 'cash';
             const payload = {
                 type: 'POS_SALE_COMPLETED',
                 clientId: 'POS-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
                 timestamp: new Date().toISOString(),
                 invoice: 'INV/POS/' + Date.now().toString().slice(-8),
-                payment: 'cash',
-                paymentLabel: 'Tunai',
-                total: summary ? summary.grandTotal : undefined,
+                payment: paymentCode,
+                paymentLabel: paymentMethod || (paymentCode === 'qris' ? 'Non-Tunai (QRIS / Gateway)' : 'Tunai'),
+                subtotal: calc.subtotal,
+                discountAmount: calc.discountAmount,
+                includeTax: Boolean(calc.includeTax),
+                taxAmount: calc.taxAmount,
+                total: calc.grandTotal,
                 cashier: 'Kasir',
                 items: soldItems.map(item => ({
                     sku: item.sku,
@@ -705,6 +749,7 @@
                 }))
             };
             posSyncChannel.postMessage(payload);
+            syncSaleToBackend(payload);
 
             // Antrean untuk modul ERP (AgriERP)
             try {
@@ -714,6 +759,22 @@
                 localStorage.setItem(KEY, JSON.stringify(queue.slice(-200)));
             } catch (e) {
                 console.warn('Antrean ERP tidak tersedia:', e);
+            }
+        }
+
+        /** Catat penjualan kasir ke backend bersama (idempoten via clientId). */
+        async function syncSaleToBackend(payload) {
+            try {
+                const res = await fetch('/api/pos/sales', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.error || 'Status ' + res.status);
+            } catch (e) {
+                showToast('Transaksi tercatat di kasir, tetapi sinkronisasi server gagal: ' + e.message, 'error');
             }
         }
 
@@ -936,7 +997,7 @@
             const taxAmount = includeTax ? Math.round(afterDiscount * 0.11) : 0;
             const grandTotal = afterDiscount + taxAmount;
 
-            return { subtotal, discountPercent, discountAmount, taxAmount, grandTotal };
+            return { subtotal, discountPercent, discountAmount, includeTax, taxAmount, grandTotal };
         }
 
         function recalculateTotals() {
@@ -1135,7 +1196,7 @@
                     prod.shelfStock = Math.max(0, prod.shelfStock - sold.qty);
                 }
             });
-            notifyWarehouseOfSale(cart);
+            notifyWarehouseOfSale(cart, paymentMethod, summary);
 
             // 2. Buat objek struk transaksi
             const txId = 'INV-' + Date.now().toString().slice(-6);
@@ -1278,6 +1339,7 @@
             lucide.createIcons();
             renderCatalog();
             renderCart();
+            loadBackendCatalog();
             requestWarehouseCatalog();
         };
     </script>

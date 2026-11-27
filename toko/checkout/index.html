@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout — Toko Mertani</title>
+  <meta name="description" content="Checkout pesanan Toko Mertani dengan validasi harga, stok, dan total oleh backend.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/toko/assets/store.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="/toko/assets/storefront.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <div class="header-inner">
+        <a class="brand" href="/toko/"><img src="/toko/assets/logo-mertani.png" alt="Logo Toko Mertani"><span class="brand-text"><strong>Toko Mertani</strong><span>Saprotan &amp; Hasil Tani</span></span></a>
+        <nav class="main-nav"><a href="/toko/">Home</a><a href="/toko/#produk">Produk</a><a href="/toko/#tentang">Tentang Kami</a></nav>
+        <div class="header-actions">
+          <a class="icon-btn" href="/toko/akun/" title="Akun pelanggan" aria-label="Akun pelanggan"><i data-lucide="user-round" width="19" height="19"></i></a>
+          <a class="icon-btn" href="/toko/keranjang/" title="Keranjang belanja" aria-label="Keranjang belanja"><i data-lucide="shopping-cart" width="19" height="19"></i><span class="cart-badge hide" data-cart-count>0</span></a>
+          <button class="icon-btn menu-btn" type="button" data-menu-btn aria-label="Buka menu"><i data-lucide="menu" width="19" height="19"></i></button>
+        </div>
+      </div>
+      <nav class="mobile-nav hide" data-mobile-nav><a href="/toko/">Home</a><a href="/toko/#produk">Produk</a><a href="/toko/#tentang">Tentang Kami</a><a href="/toko/akun/">Akun Saya</a></nav>
+    </div>
+  </header>
+
+  <section class="page-head">
+    <div class="container"><span class="eyebrow"><i data-lucide="clipboard-check" width="14" height="14"></i> Checkout</span><h1>Konfirmasi pesanan</h1><p>Periksa kembali produk, total, dan metode pembayaran sebelum mengirim pesanan.</p></div>
+  </section>
+
+  <main class="section">
+    <div class="container" id="checkoutRoot">
+      <div class="checkout-layout">
+        <div class="stack">
+          <section class="panel panel-pad">
+            <h2 style="margin:0 0 16px;font-size:17px;">1. Detail pelanggan</h2>
+            <div class="field"><label for="customerName">Nama lengkap</label><input class="input" id="customerName" required></div>
+            <div class="field"><label for="customerPhone">Nomor HP / WhatsApp</label><input class="input" id="customerPhone" required></div>
+            <div class="field"><label for="customerAddress">Alamat pengiriman / pengambilan</label><textarea class="input" id="customerAddress" rows="3" required></textarea></div>
+            <div class="field" style="margin-bottom:0;"><label for="customerNote">Catatan pesanan (opsional)</label><textarea class="input" id="customerNote" rows="2"></textarea></div>
+          </section>
+
+          <section class="panel panel-pad">
+            <h2 style="margin:0 0 16px;font-size:17px;">2. Metode pembayaran</h2>
+            <div id="paymentList">Memuat metode pembayaran...</div>
+            <div class="alert alert-info">Metode diambil dari konfigurasi penjualan Toko Mertani. Tidak ada pembayaran online yang otomatis dinyatakan lunas oleh website ini.</div>
+          </section>
+
+          <section class="panel panel-pad">
+            <h2 style="margin:0 0 16px;font-size:17px;">3. Produk dipesan</h2>
+            <div id="checkoutLines">Memuat keranjang...</div>
+          </section>
+        </div>
+
+        <aside class="panel panel-pad" style="position:sticky;top:96px;">
+          <h2 style="margin:0 0 14px;font-size:17px;">Ringkasan pembayaran</h2>
+          <div class="summary-row"><span>Jumlah barang</span><strong id="checkoutItems">0</strong></div>
+          <div class="summary-row"><span>Total belanja</span><strong id="checkoutTotal">Rp 0</strong></div>
+          <div id="checkoutAlert"></div>
+          <button class="btn btn-primary btn-block" id="submitOrder" type="button"><i data-lucide="shield-check" width="16" height="16"></i> Kirim Pesanan</button>
+          <a class="btn btn-ghost btn-block" style="margin-top:10px;" href="/toko/keranjang/">Kembali ke keranjang</a>
+          <p class="hint">Total dihitung ulang dan divalidasi backend. Stok dikurangi setelah pesanan berhasil dibuat.</p>
+        </aside>
+      </div>
+    </div>
+
+    <div class="container hide" id="successRoot">
+      <section class="panel panel-pad" style="max-width:680px;margin:0 auto;text-align:center;">
+        <i data-lucide="check-circle-2" width="52" height="52" style="color:var(--green);"></i>
+        <h1 style="margin:16px 0 8px;font-size:28px;">Pesanan berhasil dibuat</h1>
+        <p style="color:var(--muted);font-size:14px;">Simpan nomor pesanan Anda untuk pengecekan status.</p>
+        <div style="margin:24px 0;padding:20px;border-radius:14px;background:var(--green-soft);text-align:left;">
+          <div class="summary-row"><span>Nomor pesanan</span><strong id="successCode">-</strong></div>
+          <div class="summary-row"><span>Total belanja</span><strong id="successTotal">-</strong></div>
+          <div class="summary-row"><span>Metode pembayaran</span><strong id="successPayment">-</strong></div>
+          <div class="summary-row"><span>Status pembayaran</span><strong id="successPaymentStatus">-</strong></div>
+          <div class="summary-row"><span>Status pesanan</span><strong id="successStatus">-</strong></div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+          <a class="btn btn-primary" href="/toko/akun/">Lihat Riwayat Pesanan</a>
+          <a class="btn btn-ghost" href="/toko/#produk">Belanja Lagi</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div><div class="footer-brand"><img src="/toko/assets/logo-mertani.png" alt="Logo Toko Mertani"><strong>Toko Mertani</strong></div><p>Katalog digital dan toko online untuk kebutuhan pertanian.</p></div>
+        <div><h4>Navigasi</h4><p><a href="/toko/">Home</a><br><a href="/toko/#produk">Produk</a><br><a href="/toko/akun/">Akun Saya</a></p></div>
+        <div><h4>Alamat</h4><p>FRXF+V8P, Jalan Raya, Pasuruan, Ngadisono, Kec. Kaliwiro, Kabupaten Wonosobo, Jawa Tengah 56364.</p></div>
+      </div>
+      <div class="footer-bottom"><span>© PT. MERTANI ID.</span><span>All Rights Reserved. <span data-year>2026</span></span></div>
+    </div>
+  </footer>
+  <div class="toast-wrap"></div>
+
+  <script>
+  (function () {
+    'use strict';
+    var M = window.Mertani;
+    var products = [];
+    var lines = [];
+    var user = null;
+
+    var statusLabel = {
+      baru: 'Baru', diproses: 'Diproses', dikirim: 'Dikirim', selesai: 'Selesai', batal: 'Dibatalkan',
+      belum_dibayar: 'Belum dibayar', menunggu_verifikasi: 'Menunggu verifikasi staf', lunas: 'Lunas', gagal: 'Gagal'
+    };
+
+    function renderLines() {
+      lines = M.cartLines(products);
+      var wrap = document.getElementById('checkoutLines');
+      if (!lines.length) {
+        wrap.innerHTML = '<div class="empty-state">Keranjang kosong. <a href="/toko/#produk" style="color:var(--green);font-weight:800;">Lihat produk</a></div>';
+      } else {
+        wrap.innerHTML = lines.map(function (l) {
+          var alert = l.issue ? '<div class="alert ' + (l.available ? 'alert-warning' : 'alert-error') + '" style="margin-top:6px;">' + M.esc(l.issue) + '</div>' : '';
+          return '<div class="cart-line">' +
+            '<img src="' + M.esc(M.imageOf(l.product || l.snapshot)) + '" alt="' + M.esc(l.name) + '">' +
+            '<div><h3>' + M.esc(l.name) + '</h3><div class="sub">' + l.qty + ' × ' + M.money(l.price) + '</div>' + alert + '</div>' +
+            '<div class="line-total"><strong>' + M.money(l.lineTotal) + '</strong></div>' +
+          '</div>';
+        }).join('');
+        M.icons();
+      }
+      var totals = M.cartTotals(lines);
+      document.getElementById('checkoutItems').textContent = String(totals.items);
+      document.getElementById('checkoutTotal').textContent = M.money(totals.total);
+      var btn = document.getElementById('submitOrder');
+      var box = document.getElementById('checkoutAlert');
+      if (totals.blocked || !lines.length) {
+        btn.disabled = true;
+        box.innerHTML = '<div class="alert alert-error" style="margin:12px 0;">Perbaiki keranjang sebelum checkout.</div>';
+      } else {
+        btn.disabled = false;
+        box.innerHTML = '<div class="alert alert-warning" style="margin:12px 0;">Pesanan belum lunas sampai pembayaran dikonfirmasi staf toko.</div>';
+      }
+    }
+
+    function renderPayments(methods) {
+      if (!methods.length) {
+        methods = [
+          { id: 'cod', label: 'Bayar di Tempat (Kasir)', detail: 'Bayar tunai saat pengambilan barang.' },
+          { id: 'transfer', label: 'Transfer Bank', detail: 'Diverifikasi manual oleh staf toko.' }
+        ];
+      }
+      document.getElementById('paymentList').innerHTML = methods.map(function (m, idx) {
+        return '<label class="payment-option"><input type="radio" name="payment" value="' + M.esc(m.id) + '"' + (idx === 0 ? ' checked' : '') + '>' +
+          '<span><strong>' + M.esc(m.label) + '</strong><br><span class="hint">' + M.esc(m.detail || '') + '</span></span></label>';
+      }).join('');
+    }
+
+    function showSuccess(order) {
+      document.getElementById('checkoutRoot').classList.add('hide');
+      document.getElementById('successRoot').classList.remove('hide');
+      document.getElementById('successCode').textContent = order.code;
+      document.getElementById('successTotal').textContent = M.money(order.total);
+      document.getElementById('successPayment').textContent = order.payment === 'transfer' ? 'Transfer Bank' : 'Bayar di Tempat (Kasir)';
+      document.getElementById('successPaymentStatus').textContent = statusLabel[order.paymentStatus] || order.paymentStatus;
+      document.getElementById('successStatus').textContent = statusLabel[order.status] || order.status;
+      M.icons();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    document.getElementById('submitOrder').addEventListener('click', async function () {
+      var btn = this;
+      var name = document.getElementById('customerName').value.trim();
+      var phone = document.getElementById('customerPhone').value.trim();
+      var address = document.getElementById('customerAddress').value.trim();
+      if (!name || !phone || !address) { M.toast('Lengkapi nama, nomor HP, dan alamat.', 'error'); return; }
+      var picked = document.querySelector('input[name="payment"]:checked');
+      if (!picked) { M.toast('Pilih metode pembayaran.', 'error'); return; }
+      var available = lines.filter(function (l) { return l.product && l.available; });
+      if (!available.length) { M.toast('Tidak ada produk yang dapat dipesan.', 'error'); return; }
+
+      btn.disabled = true;
+      btn.textContent = 'Memproses...';
+      try {
+        var order = await M.createOrder({
+          clientId: M.checkoutClientId(),
+          customer: { name: name, phone: phone, address: address },
+          note: document.getElementById('customerNote').value.trim(),
+          payment: picked.value,
+          items: available.map(function (l) { return { id: l.id, qty: l.qty }; })
+        });
+        M.clearCart();
+        showSuccess(order);
+        M.syncHeader();
+      } catch (err) {
+        M.toast(err.message || 'Pesanan gagal dibuat.', 'error');
+        products = await M.fetchCatalog().catch(function () { return products; });
+        renderLines();
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="shield-check" width="16" height="16"></i> Kirim Pesanan';
+        M.icons();
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', async function () {
+      M.initShared();
+      try {
+        user = await M.fetchMe();
+        if (!user) {
+          location.replace('/toko/login/?next=' + encodeURIComponent('/toko/checkout/'));
+          return;
+        }
+        document.getElementById('customerName').value = user.name || '';
+        document.getElementById('customerPhone').value = user.phone || '';
+        var [catalog, methods] = await Promise.all([M.fetchCatalog(), M.fetchPaymentMethods()]);
+        products = catalog;
+        renderPayments(methods);
+        renderLines();
+      } catch (err) {
+        M.toast(err.message || 'Checkout belum dapat dimuat.', 'error');
+      }
+    });
+  })();
+  </script>
+</body>
+</html>

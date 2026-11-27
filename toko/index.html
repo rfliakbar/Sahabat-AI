@@ -1,589 +1,300 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Toko Tani — Belanja Saprotan &amp; Hasil Tani</title>
-<meta name="description" content="Belanja benih, pupuk, pestisida, dan alat pertanian. Pesan online, bayar di tempat atau transfer, lacak pesanan Anda.">
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/lucide@latest"></script>
-<script>
-  tailwind.config = {
-    theme: { extend: {
-      fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], mono: ['"JetBrains Mono"', 'monospace'] },
-      colors: { agri: { 50:'#f2fbf5',100:'#e1f7e8',200:'#c4edd2',300:'#96deaf',400:'#5fc684',500:'#38ab63',600:'#278b4d',700:'#216e3f',800:'#1e5835',900:'#1a482d',950:'#0d2718' } }
-    } }
-  };
-</script>
-<style>
-  ::-webkit-scrollbar{width:8px;height:8px}
-  ::-webkit-scrollbar-thumb{background:#96deaf;border-radius:9999px}
-  .agri-pattern{background-color:#f8faf9;background-image:radial-gradient(#278b4d12 1px,transparent 1px);background-size:22px 22px}
-  .card{background:#fff;border:1px solid rgb(226 232 240/.9);border-radius:1rem;box-shadow:0 1px 2px rgb(15 23 42/.04);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
-  .card:hover{transform:translateY(-3px);box-shadow:0 18px 40px -24px rgb(13 39 24/.45);border-color:#c4edd2}
-  .badge{display:inline-flex;align-items:center;gap:.3rem;font-size:.6875rem;font-weight:700;padding:.2rem .55rem;border-radius:9999px}
-  .hide{display:none !important}
-</style>
+  <meta charset="UTF-8">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Toko Mertani — Katalog &amp; Toko Pertanian</title>
+  <meta name="description" content="Toko Mertani: katalog saprotan, benih, pupuk, dan hasil tani. Lihat produk dan harga tanpa login, pesan online dengan keranjang belanja.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/toko/assets/store.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="/toko/assets/storefront.js"></script>
 </head>
-<body class="agri-pattern font-sans text-slate-800 antialiased min-h-screen flex flex-col">
-
-<!-- HEADER TOKO (terpisah dari header website utama) -->
-<header class="bg-agri-950 text-white sticky top-0 z-40 shadow-lg shadow-agri-950/20">
-  <div class="max-w-6xl mx-auto px-5 py-3.5 flex items-center justify-between gap-3">
-    <a href="/toko/" class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-agri-400 to-agri-600 flex items-center justify-center shadow-lg shadow-agri-900/40">
-        <i data-lucide="sprout" class="w-5 h-5 text-white"></i>
-      </div>
-      <div>
-        <p class="font-extrabold text-lg leading-none tracking-tight">Toko <span class="text-agri-300">Tani</span></p>
-        <p class="text-[10.5px] text-agri-300 mt-1">Saprotan &amp; Hasil Tani</p>
-      </div>
-    </a>
-    <nav class="hidden md:flex items-center gap-1 text-[12.5px] font-semibold">
-      <a href="#katalog" class="px-3 py-2 rounded-lg text-agri-100 hover:bg-agri-800 hover:text-white transition">Katalog</a>
-      <a href="#lacak" class="px-3 py-2 rounded-lg text-agri-100 hover:bg-agri-800 hover:text-white transition">Lacak Pesanan</a>
-      <a href="/login/" class="px-3 py-2 rounded-lg text-agri-300 hover:bg-agri-800 hover:text-white transition">Masuk Staff</a>
-    </nav>
-    <div class="flex items-center gap-2">
-      <span id="userChip" class="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg bg-agri-900 border border-agri-800 text-[11.5px] font-bold text-agri-100 max-w-[180px]">
-        <i data-lucide="user-round" class="w-3.5 h-3.5 text-agri-300"></i>
-        <span id="userName" class="truncate">Customer</span>
-      </span>
-      <button id="logoutBtn" class="px-2.5 py-2 rounded-lg border border-agri-700 text-agri-200 hover:bg-agri-800 text-[11.5px] font-bold flex items-center gap-1 transition" title="Keluar">
-        <i data-lucide="log-out" class="w-3.5 h-3.5"></i><span class="hidden sm:inline">Keluar</span>
-      </button>
-      <button id="cartBtn" class="relative px-4 py-2 rounded-xl bg-agri-400 hover:bg-agri-300 text-agri-950 text-xs font-extrabold flex items-center gap-1.5 transition">
-        <i data-lucide="shopping-basket" class="w-4 h-4"></i> Keranjang
-        <span id="cartCount" class="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full bg-rose-500 text-white text-[10.5px] font-bold flex items-center justify-center hide">0</span>
-      </button>
-    </div>
-  </div>
-</header>
-
-<main class="flex-1">
-
-  <!-- HERO -->
-  <section class="max-w-6xl mx-auto px-5 pt-10 pb-6">
-    <div class="rounded-3xl bg-agri-900 text-white p-6 sm:p-9 relative overflow-hidden">
-      <div class="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-agri-700/50"></div>
-      <div class="absolute right-24 -bottom-20 w-48 h-48 rounded-full bg-agri-500/25"></div>
-      <div class="relative max-w-xl">
-        <span class="badge bg-white/10 text-agri-100 border border-white/20 mb-3">
-          <i data-lucide="truck" class="w-3 h-3"></i> Antar ke lokasi · Bayar di tempat tersedia
-        </span>
-        <h1 class="text-2xl sm:text-4xl font-extrabold leading-tight tracking-tight">
-          Kebutuhan tani,<br><span class="text-agri-300">langsung dari toko.</span>
-        </h1>
-        <p class="mt-3 text-[13.5px] text-agri-100/90 leading-relaxed">
-          Benih, pupuk, pestisida, dan alat pertanian asli dengan harga transparan.
-          Pesan dari rumah, ambil di toko atau minta diantar.
-        </p>
-        <div class="mt-5 flex flex-wrap gap-2 text-[11.5px] font-semibold">
-          <span class="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5"><i data-lucide="badge-check" class="w-3.5 h-3.5 text-agri-300"></i> Produk original</span>
-          <span class="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5"><i data-lucide="wallet" class="w-3.5 h-3.5 text-agri-300"></i> COD / Transfer</span>
-          <span class="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5"><i data-lucide="package-check" class="w-3.5 h-3.5 text-agri-300"></i> Stok real-time</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- KATALOG -->
-  <section id="katalog" class="max-w-6xl mx-auto px-5 pb-14">
-    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-4">
-      <div>
-        <h2 class="text-xl font-extrabold text-agri-950">Katalog produk</h2>
-        <p class="text-[12.5px] text-slate-500 mt-1">Harga per satuan, stok diperbarui otomatis dari gudang.</p>
-      </div>
-      <div class="relative w-full sm:w-72">
-        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
-        <input id="search" type="search" placeholder="Cari benih, pupuk, alat…"
-          class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-agri-300 focus:border-agri-400">
-      </div>
-    </div>
-
-    <div id="chips" class="flex flex-wrap gap-2 mb-5"></div>
-    <div id="grid" class="grid grid-cols-2 lg:grid-cols-4 gap-4"></div>
-    <p id="empty" class="hide text-center text-sm text-slate-500 py-14">Produk tidak ditemukan. Coba kata kunci lain.</p>
-  </section>
-
-  <!-- LACAK -->
-  <section id="lacak" class="bg-white border-y border-slate-200">
-    <div class="max-w-6xl mx-auto px-5 py-10 grid md:grid-cols-2 gap-6 items-start">
-      <div>
-        <h2 class="text-lg font-extrabold text-agri-950">Lacak pesanan</h2>
-        <p class="text-[12.5px] text-slate-500 mt-1">Masukkan kode pesanan yang Anda terima saat checkout.</p>
-        <form id="trackForm" class="mt-3 flex gap-2">
-          <input id="trackInput" required placeholder="Kode pesanan"
-            class="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-agri-300 focus:border-agri-400">
-          <button class="px-4 py-2.5 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-sm font-bold transition">Cek</button>
-        </form>
-        <div id="trackResult" class="mt-4"></div>
-
-        <div class="mt-6">
-          <div class="flex items-end justify-between gap-2">
-            <div>
-              <h3 class="text-[13px] font-extrabold text-agri-950">Pesanan saya</h3>
-              <p class="text-[11.5px] text-slate-500 mt-0.5">Otomatis dari akun <span id="myOrdersEmail" class="font-mono">—</span></p>
-            </div>
-          </div>
-          <div id="myOrders" class="mt-2.5 space-y-2"></div>
-        </div>
-      </div>
-      <div class="rounded-2xl border border-agri-200 bg-agri-50/70 p-4">
-        <div class="flex items-start gap-3">
-          <i data-lucide="info" class="w-4 h-4 text-agri-700 mt-0.5 flex-shrink-0"></i>
-          <div class="text-[11.5px] text-slate-600 leading-relaxed">
-            <b class="text-agri-900">Cara pesan:</b>
-            <ol class="mt-1.5 space-y-1 list-decimal list-inside">
-              <li>Pilih produk, tentukan jumlah, lalu tambahkan ke keranjang.</li>
-              <li>Buka keranjang → isi nama, nomor HP, dan alamat.</li>
-              <li>Pilih pembayaran (COD atau transfer), lalu kirim pesanan.</li>
-              <li>Simpan kode pesanan untuk melacak status.</li>
-            </ol>
-            <p class="mt-2">Pesanan diproses pada jam operasional toko (08.00–17.00).</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-</main>
-
-<footer class="bg-white">
-  <div class="max-w-6xl mx-auto px-5 py-5 flex flex-wrap items-center justify-between gap-2 text-[11.5px] text-slate-500">
-    <span>© 2026 Toko Tani · Saprotan &amp; Hasil Tani</span>
-    <a href="/" class="font-mono hover:text-agri-700">Situs utama AgriSuite</a>
-  </div>
-</footer>
-
-<!-- CART PANEL -->
-<div id="cartOverlay" class="hide fixed inset-0 bg-agri-950/40 backdrop-blur-[2px] z-40"></div>
-<aside id="cartPanel" class="fixed top-0 right-0 h-full w-full sm:w-[420px] bg-white z-50 shadow-2xl translate-x-full transition-transform duration-300 flex flex-col">
-  <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
-    <div class="flex items-center gap-2">
-      <i data-lucide="shopping-basket" class="w-5 h-5 text-agri-700"></i>
-      <h3 class="font-extrabold text-agri-950">Keranjang</h3>
-    </div>
-    <button id="closeCart" class="p-2 rounded-lg hover:bg-slate-100"><i data-lucide="x" class="w-5 h-5 text-slate-500"></i></button>
-  </div>
-  <div id="cartItems" class="flex-1 overflow-y-auto px-5 py-4 space-y-3"></div>
-  <div class="border-t border-slate-200 px-5 py-4 space-y-3">
-    <div class="flex items-center justify-between text-sm">
-      <span class="text-slate-500">Total</span>
-      <span id="cartTotal" class="font-extrabold text-agri-900 text-lg">Rp 0</span>
-    </div>
-    <button id="checkoutBtn" class="w-full py-3 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-sm font-extrabold transition">
-      Lanjut ke checkout
-    </button>
-  </div>
-</aside>
-
-<!-- CHECKOUT MODAL -->
-<div id="checkoutOverlay" class="hide fixed inset-0 bg-agri-950/50 backdrop-blur-[2px] z-[60] overflow-y-auto">
-  <div class="min-h-full flex items-start sm:items-center justify-center p-4">
-    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl p-5 sm:p-6">
-      <div class="flex items-start justify-between">
-        <div>
-          <h3 class="font-extrabold text-agri-950 text-lg">Checkout</h3>
-          <p class="text-[12px] text-slate-500 mt-0.5">Lengkapi data pengiriman untuk menyelesaikan pesanan.</p>
-        </div>
-        <button id="closeCheckout" class="p-2 rounded-lg hover:bg-slate-100"><i data-lucide="x" class="w-5 h-5 text-slate-500"></i></button>
-      </div>
-      <form id="checkoutForm" class="mt-4 space-y-3">
-        <label class="block">
-          <span class="text-[11.5px] font-bold text-slate-600">Email (untuk pesanan saya) *</span>
-          <input name="email" type="email" required class="mt-1 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-agri-300 focus:border-agri-400 bg-slate-50">
-        </label>
-        <div class="grid sm:grid-cols-2 gap-3">
-          <label class="block">
-            <span class="text-[11.5px] font-bold text-slate-600">Nama lengkap *</span>
-            <input name="name" required class="mt-1 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-agri-300 focus:border-agri-400">
-          </label>
-          <label class="block">
-            <span class="text-[11.5px] font-bold text-slate-600">No. HP / WhatsApp *</span>
-            <input name="phone" required inputmode="tel" pattern="[0-9+\- ]{8,18}" class="mt-1 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-agri-300 focus:border-agri-400">
-          </label>
-        </div>
-        <label class="block">
-          <span class="text-[11.5px] font-bold text-slate-600">Alamat pengiriman *</span>
-          <textarea name="address" required rows="2" class="mt-1 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-agri-300 focus:border-agri-400"></textarea>
-        </label>
-        <label class="block">
-          <span class="text-[11.5px] font-bold text-slate-600">Catatan (opsional)</span>
-          <input name="note" class="mt-1 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-agri-300 focus:border-agri-400">
-        </label>
-        <div>
-          <span class="text-[11.5px] font-bold text-slate-600">Metode pembayaran</span>
-          <div class="mt-1.5 grid grid-cols-2 gap-2">
-            <label class="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-slate-200 cursor-pointer hover:border-agri-300 text-sm font-semibold">
-              <input type="radio" name="payment" value="cod" checked class="accent-agri-600"> Bayar di tempat
-            </label>
-            <label class="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-slate-200 cursor-pointer hover:border-agri-300 text-sm font-semibold">
-              <input type="radio" name="payment" value="transfer" class="accent-agri-600"> Transfer bank
-            </label>
-          </div>
-        </div>
-        <div class="rounded-xl bg-agri-50 border border-agri-200 px-3.5 py-3 flex items-center justify-between">
-          <span class="text-[12px] font-bold text-agri-900">Total pesanan</span>
-          <span id="checkoutTotal" class="font-extrabold text-agri-900">Rp 0</span>
-        </div>
-        <p id="checkoutError" class="hide text-[12px] text-rose-600 font-semibold"></p>
-        <button id="checkoutSubmit" class="w-full py-3 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-sm font-extrabold transition">Kirim pesanan</button>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- SUCCESS MODAL -->
-<div id="successOverlay" class="hide fixed inset-0 bg-agri-950/50 backdrop-blur-[2px] z-[70] overflow-y-auto">
-  <div class="min-h-full flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 text-center">
-      <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center">
-        <i data-lucide="check-circle-2" class="w-7 h-7 text-emerald-600"></i>
-      </div>
-      <h3 class="mt-4 text-lg font-extrabold text-agri-950">Pesanan diterima!</h3>
-      <p class="mt-1 text-[12.5px] text-slate-500">Simpan kode ini untuk melacak pesanan Anda.</p>
-      <p id="successCode" class="mt-4 font-mono font-bold text-agri-800 text-base bg-agri-50 border border-agri-200 rounded-xl py-2.5"></p>
-      <p id="successSummary" class="mt-3 text-[12px] text-slate-600"></p>
-      <div class="mt-5 flex gap-2">
-        <button id="successClose" class="flex-1 py-2.5 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-sm font-bold transition">Belanja lagi</button>
-        <a href="#lacak" id="successTrack" class="flex-1 py-2.5 rounded-xl border border-slate-200 hover:border-agri-300 text-agri-900 text-sm font-bold transition flex items-center justify-center gap-1.5">
-          <i data-lucide="search" class="w-4 h-4"></i> Lacak
+<body>
+  <header class="site-header">
+    <div class="container">
+      <div class="header-inner">
+        <a class="brand" href="/toko/" aria-label="Toko Mertani - Home">
+          <img src="/toko/assets/logo-mertani.png" alt="Logo Toko Mertani">
+          <span class="brand-text"><strong>Toko Mertani</strong><span>Saprotan &amp; Hasil Tani</span></span>
         </a>
+        <nav class="main-nav" aria-label="Navigasi utama">
+          <a href="#home" class="active">Home</a>
+          <a href="#produk">Produk</a>
+          <a href="#tentang">Tentang Kami</a>
+        </nav>
+        <div class="header-actions">
+          <a class="icon-btn" href="/toko/akun/" title="Akun pelanggan" aria-label="Akun pelanggan"><i data-lucide="user-round" width="19" height="19"></i></a>
+          <a class="icon-btn" href="/toko/keranjang/" title="Keranjang belanja" aria-label="Keranjang belanja">
+            <i data-lucide="shopping-cart" width="19" height="19"></i>
+            <span class="cart-badge hide" data-cart-count>0</span>
+          </a>
+          <button class="icon-btn menu-btn" type="button" data-menu-btn aria-label="Buka menu"><i data-lucide="menu" width="19" height="19"></i></button>
+        </div>
+      </div>
+      <nav class="mobile-nav hide" data-mobile-nav aria-label="Navigasi mobile">
+        <a href="#home">Home</a>
+        <a href="#produk">Produk</a>
+        <a href="#tentang">Tentang Kami</a>
+        <a href="/toko/akun/">Akun Saya</a>
+        <a href="/toko/keranjang/">Keranjang</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="container hero-inner">
+        <div>
+          <span class="eyebrow"><i data-lucide="sprout" width="14" height="14"></i> Toko Pertanian · Wonosobo</span>
+          <h1>Belanja kebutuhan tani, lebih mudah dan transparan.</h1>
+          <p>Toko Mertani menyediakan benih, pupuk, pestisida, alat pertanian, dan hasil tani. Lihat katalog lengkap, harga jual, serta ketersediaan stok secara publik—tanpa perlu login.</p>
+          <div class="hero-address">
+            <i data-lucide="map-pin" width="18" height="18"></i>
+            <span>FRXF+V8P, Jalan Raya, Pasuruan, Ngadisono, Kec. Kaliwiro, Kabupaten Wonosobo, Jawa Tengah 56364.</span>
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a class="btn btn-white" href="#produk"><i data-lucide="layout-grid" width="16" height="16"></i> Lihat Semua Produk</a>
+            <a class="btn btn-ghost" href="#tentang">Tentang Toko</a>
+          </div>
+        </div>
+        <div class="hero-card">
+          <img src="/toko/assets/foto-toko-mertani.jpeg" alt="Foto Toko Mertani">
+          <div>
+            <div><strong>Toko Mertani</strong><br><span>Katalog digital &amp; toko online</span></div>
+            <span style="font-weight:800;color:var(--green);">Katalog Digital</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="tentang">
+      <div class="container about-grid">
+        <div class="about-photo"><img src="/toko/assets/foto-toko-mertani.jpeg" alt="Tampilan Toko Mertani"></div>
+        <div class="about-copy">
+          <span class="kicker">Tentang Kami</span>
+          <h2>Toko pertanian yang dekat dengan petani.</h2>
+          <p>Toko Mertani melayani kebutuhan usaha tani di sekitar Kaliwiro, Wonosobo, dan sekitarnya. Kami menghadirkan katalog digital agar pelanggan dapat mencari produk, membandingkan harga, dan mengecek stok sebelum datang atau memesan.</p>
+          <div class="info-row">
+            <i data-lucide="map-pin" width="18" height="18"></i>
+            <div><strong>Alamat toko</strong>FRXF+V8P, Jalan Raya, Pasuruan, Ngadisono, Kec. Kaliwiro, Kabupaten Wonosobo, Jawa Tengah 56364.</div>
+          </div>
+          <div class="info-row">
+            <i data-lucide="target" width="18" height="18"></i>
+            <div><strong>Katalog toko</strong>Harga jual dan informasi stok menampilkan data yang sama dengan pencatatan penjualan toko.</div>
+          </div>
+          <div style="margin-top:18px;">
+            <a class="btn btn-ghost btn-sm" href="https://www.google.com/maps/search/?api=1&query=FRXF%2BV8P%2C+Jalan+Raya%2C+Pasuruan%2C+Ngadisono%2C+Kaliwiro%2C+Wonosobo" target="_blank" rel="noopener"><i data-lucide="navigation" width="14" height="14"></i> Petunjuk arah</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-sm" style="background:#fff;border-top:1px solid var(--line);">
+      <div class="container">
+        <div class="section-head">
+          <div><span class="kicker">Pilihan Toko</span><h2>Produk unggulan</h2><p>Diambil langsung dari katalog penjualan Toko Mertani.</p></div>
+          <a class="btn btn-primary" href="#produk">Lihat semua produk <i data-lucide="arrow-right" width="16" height="16"></i></a>
+        </div>
+        <div class="product-grid" id="featuredGrid"></div>
+      </div>
+    </section>
+
+    <section class="section catalog-section" id="produk">
+      <div class="container">
+        <div class="section-head">
+          <div><span class="kicker">Katalog Digital</span><h2>Semua produk</h2><p>Cari, filter, dan urutkan produk. Harga serta stok mengikuti data penjualan toko.</p></div>
+          <span id="resultInfo" style="font-size:12px;color:var(--muted);font-weight:700;"></span>
+        </div>
+        <div class="toolbar">
+          <div class="search-wrap">
+            <i data-lucide="search" width="17" height="17"></i>
+            <input class="input" id="searchInput" type="search" placeholder="Cari produk berdasarkan nama..." aria-label="Cari produk">
+          </div>
+          <select class="select" id="categoryFilter" aria-label="Filter kategori"><option value="Semua">Semua kategori</option></select>
+          <select class="select" id="sortSelect" aria-label="Urutkan produk">
+            <option value="name-asc">Nama A–Z</option>
+            <option value="name-desc">Nama Z–A</option>
+            <option value="price-asc">Harga termurah</option>
+            <option value="price-desc">Harga termahal</option>
+          </select>
+        </div>
+        <div class="chips" id="categoryChips"></div>
+        <div class="product-grid" id="productGrid"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand"><img src="/toko/assets/logo-mertani.png" alt="Logo Toko Mertani"><strong>Toko Mertani</strong></div>
+          <p>Katalog digital dan toko online untuk kebutuhan pertanian di Wonosobo dan sekitarnya.</p>
+        </div>
+        <div>
+          <h4>Navigasi</h4>
+          <p><a href="#home">Home</a><br><a href="#produk">Produk</a><br><a href="#tentang">Tentang Kami</a><br><a href="/toko/keranjang/">Keranjang</a></p>
+        </div>
+        <div>
+          <h4>Alamat &amp; Identitas</h4>
+          <p>FRXF+V8P, Jalan Raya, Pasuruan, Ngadisono, Kec. Kaliwiro, Kabupaten Wonosobo, Jawa Tengah 56364.</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© PT. MERTANI ID.</span>
+        <span>All Rights Reserved. <span data-year>2026</span></span>
       </div>
     </div>
+  </footer>
+
+  <div class="modal-backdrop hide" id="detailModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Detail produk">
+      <div class="modal-head"><h2>Detail produk</h2><button class="icon-btn" type="button" id="closeDetail" aria-label="Tutup"><i data-lucide="x" width="18" height="18"></i></button></div>
+      <div class="modal-body" id="detailBody"></div>
+    </div>
   </div>
-</div>
+  <div class="toast-wrap"></div>
 
-<!-- TOAST -->
-<div id="toast" class="hide fixed bottom-5 left-1/2 -translate-x-1/2 z-[80] bg-agri-950 text-white text-[12.5px] font-semibold px-4 py-2.5 rounded-xl shadow-xl"></div>
+  <script>
+  (function () {
+    'use strict';
+    var M = window.Mertani;
+    var products = [];
+    var state = { q: '', category: 'Semua', sort: 'name-asc' };
 
-<script src="/page/shop/store.js"></script>
-<script>
-(async function () {
-  const S = window.AgriShop;
-  const $ = (id) => document.getElementById(id);
-  const icons = () => window.lucide && window.lucide.createIcons();
-
-  /* ---- sesi customer dari backend (cookie sa_session) ---- */
-  const me = await S.customerMe();
-  if (!me) {
-    location.replace('/toko/login/?next=' + encodeURIComponent('/toko/'));
-    return;
-  }
-
-  const state = { cart: new Map(), category: 'Semua', q: '', products: [], orders: [] };
-
-  $('userName').textContent = me.name || 'Customer';
-  $('userChip').classList.remove('hidden');
-  $('myOrdersEmail').textContent = me.email || '—';
-  $('logoutBtn').onclick = async () => {
-    if (confirm('Keluar dari akun ini?')) {
-      await S.logoutCustomer();
-      location.replace('/toko/login/');
+    function stockLabel(p) {
+      if (!p || Number(p.stock) <= 0) return '<span class="stock out"><i data-lucide="x-circle" width="13" height="13"></i> Stok habis</span>';
+      if (Number(p.stock) <= 10) return '<span class="stock low"><i data-lucide="alert-triangle" width="13" height="13"></i> Sisa ' + p.stock + '</span>';
+      return '<span class="stock"><i data-lucide="check-circle-2" width="13" height="13"></i> Stok ' + p.stock + '</span>';
     }
-  };
 
-  function toast(msg, bad) {
-    const el = $('toast');
-    el.textContent = msg;
-    el.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 z-[80] text-white text-[12.5px] font-semibold px-4 py-2.5 rounded-xl shadow-xl ' + (bad ? 'bg-rose-600' : 'bg-agri-950');
-    el.classList.remove('hide');
-    clearTimeout(toast._t);
-    toast._t = setTimeout(() => el.classList.add('hide'), 2600);
-  }
-
-  function rupiah(n) { return S.rupiah(n); }
-  function productById(id) { return state.products.find((p) => p.id === id); }
-
-  /* ---- katalog: backend (dipakai Gudang) + fallback lokal ---- */
-  async function refreshCatalog() {
-    let list = [];
-    try {
-      list = await S.fetchCatalog();
-    } catch (e) {
-      list = [];
+    function cardHtml(p) {
+      var out = Number(p.stock) <= 0;
+      return '<article class="product-card">' +
+        '<div class="product-media">' +
+          '<img src="' + M.esc(M.imageOf(p)) + '" alt="' + M.esc(p.name) + '" loading="lazy">' +
+          (out ? '<div class="out-overlay">STOK HABIS</div>' : '') +
+        '</div>' +
+        '<div class="product-body">' +
+          '<span class="category-tag">' + M.esc(p.category || 'Lainnya') + '</span>' +
+          '<h3>' + M.esc(p.name) + '</h3>' +
+          '<div class="product-price">' + M.money(p.price) + '</div>' +
+          '<div class="product-unit">per ' + M.esc(p.unit || 'unit') + '</div>' +
+          '<div class="product-foot">' + stockLabel(p) +
+            '<button class="btn btn-primary btn-sm" type="button" data-add="' + M.esc(p.id) + '"' + (out ? ' disabled' : '') + '>' +
+              (out ? 'Habis' : 'Tambah') + '</button>' +
+          '</div>' +
+          '<button class="link-danger" style="margin-top:10px;" type="button" data-detail="' + M.esc(p.id) + '">Lihat detail</button>' +
+        '</div>' +
+      '</article>';
     }
-    if (!list.length) {
-      try { list = S.load().products; } catch (e) { list = []; }
+
+    function renderFeatured() {
+      var el = document.getElementById('featuredGrid');
+      var list = products.filter(function (p) { return p.active !== false; }).slice(0, 4);
+      el.innerHTML = list.length ? list.map(cardHtml).join('') : '<div class="empty-state">Produk unggulan belum tersedia.</div>';
+      M.icons();
     }
-    state.products = list
-      .filter((p) => p && p.active !== false)
-      .map((p) => ({
-        id: p.id,
-        sku: p.sku || '',
-        name: p.name,
-        category: p.category || 'Lainnya',
-        price: Number(p.price) || 0,
-        unit: p.unit || 'unit',
-        stock: Number(p.stock != null ? p.stock : (p.availableStock != null ? p.availableStock : 0)) || 0,
-        image: p.image || 'https://placehold.co/600x450/278b4d/ffffff?text=' + encodeURIComponent(p.name || 'Produk'),
-        active: true
-      }));
-    renderChips(); renderGrid(); renderCart();
-  }
 
-  function categories() {
-    return ['Semua', ...new Set(state.products.map((p) => p.category))];
-  }
-
-  function renderChips() {
-    $('chips').innerHTML = categories().map((c) => `
-      <button data-cat="${c}" class="px-3.5 py-1.5 rounded-full text-[12px] font-bold border transition
-        ${c === state.category ? 'bg-agri-700 text-white border-agri-700' : 'bg-white text-slate-600 border-slate-200 hover:border-agri-300'}">${c}</button>`).join('');
-    $('chips').querySelectorAll('[data-cat]').forEach((b) => b.onclick = () => {
-      state.category = b.dataset.cat; renderChips(); renderGrid();
-    });
-  }
-
-  function renderGrid() {
-    const prods = state.products
-      .filter((p) => state.category === 'Semua' || p.category === state.category)
-      .filter((p) => !state.q || (p.name + ' ' + p.sku + ' ' + p.category).toLowerCase().includes(state.q));
-
-    $('empty').classList.toggle('hide', prods.length > 0);
-    $('grid').innerHTML = prods.map((p) => {
-      const low = p.stock <= 10;
-      return `
-      <article class="card overflow-hidden flex flex-col">
-        <div class="relative aspect-[4/3] bg-slate-100 overflow-hidden">
-          <img src="${p.image}" alt="${p.name}" loading="lazy" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x450/278b4d/ffffff?text=Produk'">
-          <span class="absolute top-2 left-2 badge bg-white/95 text-agri-800 border border-agri-200">${p.category}</span>
-          ${p.stock === 0 ? '<span class="absolute inset-0 bg-agri-950/55 text-white text-xs font-extrabold flex items-center justify-center tracking-wide">STOK HABIS</span>' : ''}
-        </div>
-        <div class="p-3.5 flex flex-col flex-1">
-          <h3 class="text-[13px] font-bold text-agri-950 leading-snug line-clamp-2">${p.name}</h3>
-          <p class="text-[10.5px] font-mono text-slate-400 mt-0.5">${p.sku}</p>
-          <div class="mt-2 flex items-end justify-between gap-2">
-            <div>
-              <p class="font-extrabold text-agri-900 text-[15px]">${rupiah(p.price)}</p>
-              <p class="text-[10.5px] ${low ? 'text-rose-600' : 'text-slate-500'} font-semibold">Stok ${p.stock} ${p.unit}</p>
-            </div>
-            <button data-add="${p.id}" ${p.stock === 0 ? 'disabled' : ''}
-              class="px-3 py-2 rounded-lg text-[11.5px] font-extrabold flex items-center gap-1 transition
-              ${p.stock === 0 ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-agri-700 hover:bg-agri-800 text-white'}">
-              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Tambah
-            </button>
-          </div>
-        </div>
-      </article>`;
-    }).join('');
-    $('grid').querySelectorAll('[data-add]').forEach((b) => b.onclick = () => addToCart(b.dataset.add));
-    icons();
-  }
-
-  /* ---- keranjang ---- */
-  function addToCart(id) {
-    const p = productById(id);
-    if (!p) return;
-    const cur = state.cart.get(id) || 0;
-    if (cur + 1 > p.stock) return toast('Stok tidak mencukupi', true);
-    state.cart.set(id, cur + 1);
-    renderCart(); toast(p.name + ' ditambahkan');
-  }
-
-  function changeQty(id, delta) {
-    const p = productById(id);
-    const cur = state.cart.get(id) || 0;
-    const next = cur + delta;
-    if (next <= 0) state.cart.delete(id);
-    else if (next > (p ? p.stock : 0)) return toast('Stok tidak mencukupi', true);
-    else state.cart.set(id, next);
-    renderCart();
-  }
-
-  function cartLines() {
-    return [...state.cart.entries()].map(([id, qty]) => {
-      const p = productById(id);
-      return p ? { ...p, qty, subtotal: p.price * qty } : null;
-    }).filter(Boolean);
-  }
-
-  function renderCart() {
-    const lines = cartLines();
-    const total = lines.reduce((s, l) => s + l.subtotal, 0);
-    const count = lines.reduce((s, l) => s + l.qty, 0);
-
-    $('cartCount').textContent = count;
-    $('cartCount').classList.toggle('hide', count === 0);
-    $('cartTotal').textContent = rupiah(total);
-    $('checkoutTotal').textContent = rupiah(total);
-
-    $('cartItems').innerHTML = lines.length ? lines.map((l) => `
-      <div class="flex gap-3 border border-slate-200 rounded-xl p-2.5">
-        <img src="${l.image}" alt="" class="w-16 h-16 rounded-lg object-cover bg-slate-100">
-        <div class="flex-1 min-w-0">
-          <p class="text-[12.5px] font-bold text-agri-950 leading-snug line-clamp-2">${l.name}</p>
-          <p class="text-[11px] text-slate-500 mt-0.5">${rupiah(l.price)} / ${l.unit}</p>
-          <div class="mt-1.5 flex items-center gap-2">
-            <button data-qty="${l.id}" data-d="-1" class="w-7 h-7 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center justify-center"><i data-lucide="minus" class="w-3.5 h-3.5"></i></button>
-            <span class="text-[12.5px] font-extrabold w-6 text-center">${l.qty}</span>
-            <button data-qty="${l.id}" data-d="1" class="w-7 h-7 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center justify-center"><i data-lucide="plus" class="w-3.5 h-3.5"></i></button>
-            <span class="ml-auto text-[12.5px] font-extrabold text-agri-900">${rupiah(l.subtotal)}</span>
-          </div>
-        </div>
-      </div>`).join('') : `<div class="text-center py-14">
-        <i data-lucide="shopping-basket" class="w-10 h-10 text-slate-300 mx-auto"></i>
-        <p class="mt-3 text-sm font-bold text-slate-500">Keranjang masih kosong</p>
-        <p class="text-[12px] text-slate-400 mt-1">Tambahkan produk dari katalog.</p>
-      </div>`;
-
-    $('cartItems').querySelectorAll('[data-qty]').forEach((b) => b.onclick = () => changeQty(b.dataset.qty, Number(b.dataset.d)));
-    icons();
-  }
-
-  function openCart(open) {
-    $('cartPanel').classList.toggle('translate-x-full', !open);
-    $('cartOverlay').classList.toggle('hide', !open);
-  }
-
-  /* ---- checkout (pesanan disimpan di backend) ---- */
-  function openCheckout() {
-    if (!cartLines().length) return toast('Keranjang masih kosong', true);
-    const f = $('checkoutForm');
-    if (!f.email.value) f.email.value = me.email || '';
-    if (!f.name.value) f.name.value = me.name || '';
-    if (!f.phone.value) f.phone.value = me.phone || '';
-    $('checkoutError').classList.add('hide');
-    $('checkoutTotal').textContent = rupiah(cartLines().reduce((s, l) => s + l.subtotal, 0));
-    $('checkoutOverlay').classList.remove('hide');
-    icons();
-    setTimeout(() => f.name.focus(), 50);
-  }
-  function closeCheckout() { $('checkoutOverlay').classList.add('hide'); }
-
-  $('checkoutForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const f = new FormData(e.target);
-    const btn = $('checkoutSubmit');
-    const prev = btn.textContent;
-    btn.disabled = true; btn.textContent = 'Mengirim…';
-    try {
-      const order = await S.createOrderRemote({
-        customer: { name: f.get('name'), email: f.get('email'), phone: f.get('phone'), address: f.get('address') },
-        note: f.get('note'),
-        payment: f.get('payment'),
-        items: cartLines().map((l) => ({ id: l.id, qty: l.qty }))
+    function filtered() {
+      var q = state.q.trim().toLowerCase();
+      var list = products.filter(function (p) {
+        if (p.active === false) return false;
+        if (state.category !== 'Semua' && p.category !== state.category) return false;
+        return !q || String(p.name).toLowerCase().indexOf(q) !== -1;
       });
-      state.cart.clear();
-      e.target.reset();
-      closeCheckout(); openCart(false);
-      await refreshCatalog();
-      await loadOrders();
-      $('successCode').textContent = order.code;
-      $('successSummary').textContent = `${order.items.length} jenis produk · ${rupiah(order.total)} · ${order.payment === 'cod' ? 'Bayar di tempat' : 'Transfer bank'}`;
-      $('successTrack').dataset.code = order.code;
-      $('successOverlay').classList.remove('hide');
-      icons();
-    } catch (err) {
-      const el = $('checkoutError');
-      el.textContent = err.message || 'Gagal membuat pesanan.';
-      el.classList.remove('hide');
-    } finally {
-      btn.disabled = false; btn.textContent = prev;
+      list.sort(function (a, b) {
+        if (state.sort === 'name-desc') return String(b.name).localeCompare(String(a.name), 'id');
+        if (state.sort === 'price-asc') return Number(a.price) - Number(b.price);
+        if (state.sort === 'price-desc') return Number(b.price) - Number(a.price);
+        return String(a.name).localeCompare(String(b.name), 'id');
+      });
+      return list;
     }
-  });
 
-  /* ---- lacak ---- */
-  $('trackForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const code = $('trackInput').value.trim().toUpperCase();
-    const order = state.orders.find((o) => String(o.code).toUpperCase() === code);
-    const box = $('trackResult');
-    if (!order) {
-      box.innerHTML = `<div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-[12.5px] text-rose-700 font-semibold">Kode pesanan tidak ditemukan. Periksa kembali.</div>`;
-      return;
+    function renderCategories() {
+      var cats = [];
+      products.forEach(function (p) {
+        if (p.active === false) return;
+        var c = p.category || 'Lainnya';
+        if (cats.indexOf(c) === -1) cats.push(c);
+      });
+      var chips = ['Semua'].concat(cats.sort(function (a, b) { return a.localeCompare(b, 'id'); }));
+      document.getElementById('categoryChips').innerHTML = chips.map(function (c) {
+        return '<button class="chip' + (c === state.category ? ' active' : '') + '" type="button" data-cat="' + M.esc(c) + '">' + M.esc(c) + '</button>';
+      }).join('');
+      var select = document.getElementById('categoryFilter');
+      select.innerHTML = chips.map(function (c) {
+        return '<option value="' + M.esc(c) + '"' + (c === state.category ? ' selected' : '') + '>' + M.esc(c === 'Semua' ? 'Semua kategori' : c) + '</option>';
+      }).join('');
     }
-    const meta = S.STATUS_META[order.status] || { label: order.status, cls: 'bg-slate-100 text-slate-600 border-slate-200' };
-    const steps = ['baru', 'diproses', 'dikirim', 'selesai'];
-    const activeIdx = order.status === 'batal' ? -1 : Math.max(0, steps.indexOf(order.status));
-    box.innerHTML = `
-      <div class="rounded-xl border border-slate-200 bg-white p-4">
-        <div class="flex items-center justify-between gap-2">
-          <p class="font-mono font-bold text-[12.5px] text-agri-900">${order.code}</p>
-          <span class="badge border ${meta.cls}">${meta.label}</span>
-        </div>
-        <p class="text-[11.5px] text-slate-500 mt-1">${new Date(order.createdAt).toLocaleString('id-ID')} · ${order.items.length} produk · <b class="text-agri-800">${rupiah(order.total)}</b></p>
-        ${order.status === 'batal' ? '<p class="mt-3 text-[12px] font-bold text-rose-600">Pesanan dibatalkan.</p>' : `
-        <div class="mt-4 flex items-center">
-          ${steps.map((s, i) => `
-            <div class="flex-1 flex flex-col items-center relative">
-              ${i > 0 ? `<div class="absolute top-3 right-1/2 w-full h-0.5 ${i <= activeIdx ? 'bg-agri-500' : 'bg-slate-200'}"></div>` : ''}
-              <div class="relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${i <= activeIdx ? 'bg-agri-600 text-white' : 'bg-slate-200 text-slate-500'}">${i + 1}</div>
-              <span class="mt-1.5 text-[10px] font-bold ${i <= activeIdx ? 'text-agri-800' : 'text-slate-400'}">${S.STATUS_META[s].label}</span>
-            </div>`).join('')}
-        </div>`}
-        <div class="mt-3 border-t border-slate-100 pt-2.5 space-y-1">
-          ${order.items.map((l) => `<p class="text-[11.5px] text-slate-600 flex justify-between"><span>${l.name} × ${l.qty}</span><b>${rupiah(l.subtotal)}</b></p>`).join('')}
-        </div>
-      </div>`;
-    icons();
-  });
 
-  /* ---- pesanan saya ---- */
-  async function loadOrders() {
-    try { state.orders = await S.fetchOrders(); } catch (e) { state.orders = []; }
-    renderMyOrders();
-  }
+    function renderProducts() {
+      var list = filtered();
+      document.getElementById('productGrid').innerHTML = list.length ? list.map(cardHtml).join('') : '<div class="empty-state">Tidak ada produk yang cocok dengan pencarian atau filter ini.</div>';
+      document.getElementById('resultInfo').textContent = list.length + ' produk ditemukan';
+      M.icons();
+    }
 
-  function renderMyOrders() {
-    const mine = state.orders;
-    $('myOrders').innerHTML = mine.length ? mine.map((o) => {
-      const meta = S.STATUS_META[o.status] || { label: o.status, cls: 'bg-slate-100 text-slate-600 border-slate-200' };
-      return `
-      <button data-mine="${o.code}" class="w-full text-left rounded-xl border border-slate-200 bg-white hover:border-agri-300 px-3.5 py-2.5 transition">
-        <div class="flex items-center justify-between gap-2">
-          <p class="font-mono text-[11px] font-bold text-agri-800">${o.code}</p>
-          <span class="badge border ${meta.cls}">${meta.label}</span>
-        </div>
-        <p class="text-[11px] text-slate-500 mt-1">${new Date(o.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })} · ${o.items.length} produk</p>
-        <p class="text-[12.5px] font-extrabold text-agri-900 mt-0.5">${rupiah(o.total)}</p>
-      </button>`;
-    }).join('') : `<div class="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-6 text-center">
-        <i data-lucide="package" class="w-7 h-7 text-slate-300 mx-auto"></i>
-        <p class="mt-2 text-[12px] font-bold text-slate-500">Belum ada pesanan</p>
-        <p class="text-[11px] text-slate-400 mt-0.5">Pesanan dengan akun Anda akan muncul di sini.</p>
-      </div>`;
+    function openDetail(id) {
+      var p = products.find(function (x) { return x.id === id; });
+      if (!p) return;
+      var out = Number(p.stock) <= 0;
+      document.getElementById('detailBody').innerHTML =
+        '<img class="detail-img" src="' + M.esc(M.imageOf(p)) + '" alt="' + M.esc(p.name) + '">' +
+        '<span class="category-tag">' + M.esc(p.category || 'Lainnya') + '</span>' +
+        '<h3 style="margin:6px 0 8px;font-size:21px;">' + M.esc(p.name) + '</h3>' +
+        '<div class="product-price">' + M.money(p.price) + ' <span class="product-unit">/ ' + M.esc(p.unit || 'unit') + '</span></div>' +
+        '<div style="margin:12px 0;">' + stockLabel(p) + '</div>' +
+        '<p style="font-size:13px;color:var(--muted);">Harga dan stok mengikuti data penjualan Toko Mertani. Produk habis tidak dapat dipesan.</p>' +
+        '<button class="btn btn-primary btn-block" type="button" data-add="' + M.esc(p.id) + '"' + (out ? ' disabled' : '') + '>' + (out ? 'Stok Habis' : 'Tambah ke Keranjang') + '</button>';
+      document.getElementById('detailModal').classList.remove('hide');
+      M.icons();
+    }
 
-    $('myOrders').querySelectorAll('[data-mine]').forEach((b) => b.onclick = () => {
-      $('trackInput').value = b.dataset.mine;
-      $('trackForm').dispatchEvent(new Event('submit'));
-      $('trackResult').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    function handleAdd(id) {
+      var p = products.find(function (x) { return x.id === id; });
+      if (!p || Number(p.stock) <= 0) { M.toast('Maaf, stok produk habis.', 'error'); return; }
+      var cart = M.getCart();
+      var current = cart.find(function (i) { return i.id === id; });
+      if (current && current.qty >= Number(p.stock)) {
+        M.toast('Jumlah di keranjang sudah mencapai stok tersedia.', 'error');
+        return;
+      }
+      M.addToCart(p, 1);
+      M.toast(p.name + ' ditambahkan ke keranjang.');
+    }
+
+    document.addEventListener('click', function (e) {
+      var add = e.target.closest('[data-add]');
+      if (add) { handleAdd(add.getAttribute('data-add')); return; }
+      var detail = e.target.closest('[data-detail]');
+      if (detail) { openDetail(detail.getAttribute('data-detail')); return; }
+      var chip = e.target.closest('[data-cat]');
+      if (chip) { state.category = chip.getAttribute('data-cat'); renderCategories(); renderProducts(); }
     });
-    icons();
-  }
+    document.getElementById('closeDetail').addEventListener('click', function () { document.getElementById('detailModal').classList.add('hide'); });
+    document.getElementById('detailModal').addEventListener('click', function (e) { if (e.target.id === 'detailModal') this.classList.add('hide'); });
+    document.getElementById('searchInput').addEventListener('input', function (e) { state.q = e.target.value; renderProducts(); });
+    document.getElementById('categoryFilter').addEventListener('change', function (e) { state.category = e.target.value; renderCategories(); renderProducts(); });
+    document.getElementById('sortSelect').addEventListener('change', function (e) { state.sort = e.target.value; renderProducts(); });
 
-  /* ---- event ---- */
-  $('cartBtn').onclick = () => { openCart(true); icons(); };
-  $('closeCart').onclick = () => openCart(false);
-  $('cartOverlay').onclick = () => openCart(false);
-  $('checkoutBtn').onclick = openCheckout;
-  $('closeCheckout').onclick = closeCheckout;
-  $('checkoutOverlay').addEventListener('click', (e) => { if (e.target === $('checkoutOverlay')) closeCheckout(); });
-  $('successClose').onclick = () => $('successOverlay').classList.add('hide');
-  $('successTrack').onclick = () => {
-    const code = $('successTrack').dataset.code || '';
-    $('successOverlay').classList.add('hide');
-    $('trackInput').value = code;
-    $('trackForm').dispatchEvent(new Event('submit'));
-    document.getElementById('lacak').scrollIntoView({ behavior: 'smooth' });
-  };
-  $('search').addEventListener('input', (e) => { state.q = e.target.value.toLowerCase().trim(); renderGrid(); });
-
-  /* ---- sinkronisasi: produk Gudang berubah -> katalog Toko ikut ---- */
-  window.addEventListener('agristock:catalog-updated', () => refreshCatalog());
-  try {
-    const ch = new BroadcastChannel('agristock_pos_sync');
-    ch.onmessage = (ev) => { if (ev.data && Array.isArray(ev.data.products)) refreshCatalog(); };
-  } catch (e) { /* BroadcastChannel opsional */ }
-
-  await refreshCatalog();
-  await loadOrders();
-  icons();
-})();
-</script>
+    document.addEventListener('DOMContentLoaded', function () {
+      M.initShared();
+      M.fetchCatalog().then(function (data) {
+        products = data;
+        renderFeatured();
+        renderCategories();
+        renderProducts();
+      }).catch(function (err) {
+        document.getElementById('productGrid').innerHTML = '<div class="empty-state">Katalog belum dapat dimuat. Silakan coba lagi.<br><small>' + M.esc(err.message) + '</small></div>';
+      });
+    });
+  })();
+  </script>
 </body>
 </html>

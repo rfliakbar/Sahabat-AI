@@ -401,8 +401,9 @@
         <p class="mt-2 text-sm font-bold text-slate-500">Tidak ada pesanan pada filter ini</p>
       </div>`;
 
-    $('orderList').querySelectorAll('[data-status]').forEach((b) => b.onclick = () => {
+    $('orderList').querySelectorAll('[data-status]').forEach((b) => b.onclick = async () => {
       S.updateOrderStatus(b.dataset.status, b.dataset.s);
+      try { await S.updateOrderStatusRemote(b.dataset.status, b.dataset.s); } catch (e) { toast('Status lokal diperbarui, tetapi sinkron server gagal', true); }
       toast('Status pesanan diperbarui');
       renderAll();
     });
@@ -442,9 +443,10 @@
       </tr>`).join('');
 
     $('productRows').querySelectorAll('[data-edit]').forEach((b) => b.onclick = () => openProduct(b.dataset.edit));
-    $('productRows').querySelectorAll('[data-toggle]').forEach((b) => b.onclick = () => {
+    $('productRows').querySelectorAll('[data-toggle]').forEach((b) => b.onclick = async () => {
       const p = S.load().products.find((x) => x.id === b.dataset.toggle);
       S.toggleProduct(p.id, !p.active);
+      await S.pushCatalog(S.load().products);
       toast(p.active ? 'Produk disembunyikan dari toko' : 'Produk ditampilkan di toko');
       renderAll();
     });
@@ -469,7 +471,7 @@
   $('addProductBtn').onclick = () => openProduct(null);
   $('closeProduct').onclick = () => $('productModal').classList.add('hide');
   $('productModal').addEventListener('click', (e) => { if (e.target === $('productModal')) $('productModal').classList.add('hide'); });
-  $('productForm').addEventListener('submit', (e) => {
+  $('productForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const f = new FormData(e.target);
     S.upsertProduct({
@@ -478,8 +480,9 @@
       price: Number(f.get('price')), stock: Number(f.get('stock')),
       unit: f.get('unit') || 'unit', image: f.get('image') || ''
     });
+    await S.pushCatalog(S.load().products);
     $('productModal').classList.add('hide');
-    toast('Produk disimpan');
+    toast('Produk disimpan dan disinkronkan ke toko');
     renderAll();
   });
 
@@ -525,6 +528,12 @@
     renderRingkasan(); renderOrders(); renderProducts(); renderCustomers();
   }
 
+  async function hydrateBackend() {
+    await S.syncBackendSnapshot();
+    renderAll();
+    icons();
+  }
+
   $('orderFilter').onchange = renderOrders;
   $('orderSearch').oninput = renderOrders;
   $('resetBtn').onclick = () => {
@@ -537,6 +546,7 @@
 
   renderAll();
   icons();
+  hydrateBackend();
 })();
 </script>
 </body>

@@ -397,6 +397,41 @@
     return data.order;
   }
 
+  async function updatePaymentStatusRemote(id, status) {
+    const data = await apiRequest('/api/orders/' + encodeURIComponent(id) + '/payment', {
+      method: 'PATCH',
+      body: { status }
+    });
+    return data.order;
+  }
+
+  async function fetchPaymentMethods() {
+    const data = await apiRequest('/api/payment-methods', { method: 'GET' });
+    return Array.isArray(data.methods) ? data.methods : [];
+  }
+
+  async function recordPosSale(payload) {
+    const data = await apiRequest('/api/pos/sales', { method: 'POST', body: payload });
+    return data;
+  }
+
+  /** Cerminkan data backend ke cache localStorage lama (dipakai panel admin). */
+  async function syncBackendSnapshot() {
+    try {
+      const [catalog, orders] = await Promise.all([
+        apiRequest('/api/catalog', { method: 'GET' }),
+        apiRequest('/api/orders', { method: 'GET' })
+      ]);
+      const data = load();
+      data.products = Array.isArray(catalog.products) ? catalog.products : data.products;
+      data.orders = Array.isArray(orders.orders) ? orders.orders : data.orders;
+      save(data);
+      return data;
+    } catch (e) {
+      return load();
+    }
+  }
+
   /** Login staf: role asli disimpan di erp_role, role 'admin' dipakai panel lama. */
   async function loginStaff(email, password) {
     const data = await apiRequest('/api/auth/login', {
@@ -464,6 +499,7 @@
     isAdminEmail, register, loginAccount, loginStaff, setSession, getSession, clearSession,
     logoutAll, logoutAllAsync, requireRole, landingFor, ordersOf,
     customerMe, loginCustomer, registerCustomer, logoutCustomer,
-    fetchCatalog, pushCatalog, fetchOrders, createOrderRemote, updateOrderStatusRemote
+    fetchCatalog, pushCatalog, fetchOrders, createOrderRemote, updateOrderStatusRemote,
+    updatePaymentStatusRemote, fetchPaymentMethods, recordPosSale, syncBackendSnapshot
   };
 })(window);

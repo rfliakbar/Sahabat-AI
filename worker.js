@@ -31,6 +31,30 @@ const ROLE_LABEL = {
 const CUSTOMER_LANDING = "/toko/";
 
 /**
+ * Metode bayar yang memang sudah dikenal sistem kasir/ERP.
+ * Tidak ada gateway pembayaran online yang diaktifkan otomatis: status
+ * pembayaran selalu diawali sebagai belum lunas / menunggu verifikasi staf.
+ */
+const STORE_PAYMENT_METHODS = [
+  {
+    id: "cod",
+    label: "Bayar di Tempat (Kasir)",
+    detail: "Bayar tunai saat pengambilan barang di toko.",
+    initialStatus: "belum_dibayar",
+  },
+  {
+    id: "transfer",
+    label: "Transfer Bank",
+    detail: "Transfer sesuai instruksi staf; pembayaran diverifikasi manual.",
+    initialStatus: "menunggu_verifikasi",
+  },
+];
+
+const PAYMENT_STATUSES = ["belum_dibayar", "menunggu_verifikasi", "lunas", "gagal"];
+
+const MAX_PRODUCT_IMAGE_LENGTH = 1000000;
+
+/**
  * Katalog awal. Dipakai HANYA bila Durable Object belum punya katalog
  * (mis. sebelum halaman Gudang pernah menyimpan produk).
  */
@@ -243,13 +267,31 @@ function resolveInternalPath(pathname) {
 
 function allowedRolesFor(pathname) {
   const isUnder = (base) => pathname === base || pathname.startsWith(`${base}/`);
-  if (isUnder("/toko/login")) return null;
-  if (isUnder("/toko")) return ["customer"];
+  // Katalog, detail produk, keranjang, dan halaman toko lain bersifat publik.
+  // Halaman yang menyimpan data pelanggan saja yang memerlukan login customer.
+  if (["/toko/checkout", "/toko/akun", "/toko/pesanan"].some(isUnder)) return ["customer"];
+  if (isUnder("/toko")) return null;
   if (isUnder("/page/erp")) return ["owner"];
   if (isUnder("/page/kasir")) return ["owner", "cashier"];
   if (isUnder("/page/gudang")) return ["owner", "warehouse"];
   if (isUnder("/page/admin")) return ["owner"];
   return null;
+}
+
+function publicProduct(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    sku: row.sku || "",
+    name: row.name,
+    category: row.category || "Lainnya",
+    price: Math.max(0, Number(row.price) || 0),
+    unit: row.unit || "unit",
+    stock: Math.max(0, Number(row.stock) || 0),
+    image: typeof row.image === "string" ? row.image : "",
+    active: row.active !== false,
+    updatedAt: row.updatedAt,
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -319,12 +361,44 @@ export class AuthStore extends DurableObject {
           address TEXT,
           note TEXT,
           payment TEXT,
+          payment_status TEXT NOT NULL DEFAULT 'belum_dibayar',
+          channel TEXT NOT NULL DEFAULT 'toko',
+          client_id TEXT,
           total INTEGER NOT NULL,
           status TEXT NOT NULL,
           items TEXT NOT NULL,
           history TEXT NOT NULL,
           created_at INTEGER NOT NULL,
           updated_at INTEGER NOT NULL
+        )
+      `);
+      // Migrasi additive untuk database yang sudah berisi pesanan lama.
+      for (const sql of [
+        "ALTER TABLE shop_orders ADD COLUMN payment_status TEXT NOT NULL DEFAULT 'belum_dibayar'",
+        "ALTER TABLE shop_orders ADD COLUMN channel TEXT NOT NULL DEFAULT 'toko'",
+        "ALTER TABLE shop_orders ADD COLUMN client_id TEXT",
+      ]) {
+        try { this.ctx.storage.sql.exec(sql); } catch { /* kolom sudah ada */ }
+      }
+      this.ctx.storage.sql.exec(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_shop_orders_client_id
+        ON shop_orders(client_id) WHERE client_id IS NOT NULL
+      `);
+      this.ctx.storage.sql.exec(`
+        CREATE TABLE IF NOT EXISTS pos_sales (
+          id TEXT PRIMARY KEY,
+          client_id TEXT NOT NULL UNIQUE,
+          invoice TEXT,
+          payment TEXT,
+          payment_label TEXT,
+          subtotal INTEGER NOT NULL,
+          discount INTEGER NOT NULL DEFAULT 0,
+          tax INTEGER NOT NULL DEFAULT 0,
+          total INTEGER NOT NULL,
+          items TEXT NOT NULL,
+          cashier TEXT,
+          source TEXT NOT NULL DEFAULT 'kasir',
+          created_at INTEGER NOT NULL
         )
       `);
       await this.seedOwner();
@@ -620,7 +694,7 @@ export class AuthStore extends DurableObject {
         price: Math.max(0, Number(p.price) || 0),
         unit: cleanText(p.unit || "unit", 30) || "unit",
         stock: Math.max(0, Number(p.stock) || 0),
-        image: typeof p.image === "string" ? p.image.slice(0, 500) : "",
+        image: typeof p.image === "string" ? p.image.slice(0, MAX_PRODUCT_IMAGE_LENGTH) : "",
         active: p.active !== false,
         updatedAt: Date.now(),
       }));
@@ -640,6 +714,9 @@ export class AuthStore extends DurableObject {
       customer: { name: row.name, email: row.email, phone: row.phone, address: row.address },
       note: row.note,
       payment: row.payment,
+      paymentStatus: row.payment_status || "belum_dibayar",
+      channel: row.channel || "toko",
+      clientId: row.client_id || "",
       total: row.total,
       status: row.status,
       items: safeJsonArray(row.items),
@@ -654,20 +731,46 @@ export class AuthStore extends DurableObject {
     const row = this.ctx.storage.sql
       .exec("SELECT COUNT(*) AS n FROM shop_orders WHERE code LIKE ?", `${prefix}-%`)
       .toArray()[0];
-    return `${prefix}-${String((Number(row && row.n) || 0) + 1).padStart(3, "0")}`;
+    const suffix = Array.from(crypto.getRandomValues(new Uint8Array(2)))
+      .map((b) => b.toString(36))
+      .join("")
+      .toUpperCase()
+      .padStart(4, "0");
+    return `${prefix}-${String((Number(row && row.n) || 0) + 1).padStart(3, "0")}-${suffix}`;
+  }
+
+  findOrderByClientId(clientId) {
+    if (!clientId) return null;
+    return this.ctx.storage.sql
+      .exec("SELECT * FROM shop_orders WHERE client_id = ? LIMIT 1", clientId)
+      .toArray()[0] || null;
   }
 
   async createOrder(customer, input) {
-    const items = Array.isArray(input.items) ? input.items : [];
-    if (!items.length) return { ok: false, error: "Keranjang kosong." };
+    const clientId = cleanText(input.clientId, 120);
+    const duplicate = this.findOrderByClientId(clientId);
+    if (duplicate) {
+      if (duplicate.email && duplicate.email !== normalizeEmail(customer.email)) {
+        return { ok: false, error: "ID checkout tidak cocok dengan akun ini." };
+      }
+      return { ok: true, order: this.orderFromRow(duplicate), duplicate: true };
+    }
+
+    // Gabungkan item ganda agar stok tidak dipotong dua kali untuk produk yang sama.
+    const requested = new Map();
+    for (const it of Array.isArray(input.items) ? input.items : []) {
+      const id = cleanText(it && it.id, 80);
+      const qty = Math.max(0, Math.floor(Number(it && it.qty) || 0));
+      if (!id || qty < 1) continue;
+      requested.set(id, (requested.get(id) || 0) + qty);
+    }
+    if (!requested.size) return { ok: false, error: "Keranjang kosong." };
 
     const { products } = await this.getCatalog();
     const lines = [];
-    for (const it of items) {
-      const qty = Math.max(0, Math.floor(Number(it.qty) || 0));
-      const p = products.find((x) => x.id === it.id);
-      if (!p || p.active === false) return { ok: false, error: "Produk tidak tersedia: " + it.id };
-      if (qty < 1) continue;
+    for (const [id, qty] of requested) {
+      const p = products.find((x) => x.id === id);
+      if (!p || p.active === false) return { ok: false, error: "Produk tidak tersedia: " + id };
       if (p.stock < qty) return { ok: false, error: `Stok ${p.name} hanya ${p.stock}` };
       lines.push({
         id: p.id,
@@ -678,7 +781,6 @@ export class AuthStore extends DurableObject {
         subtotal: p.price * qty,
       });
     }
-    if (!lines.length) return { ok: false, error: "Keranjang kosong." };
 
     const total = lines.reduce((sum, l) => sum + l.subtotal, 0);
     lines.forEach((l) => {
@@ -687,6 +789,7 @@ export class AuthStore extends DurableObject {
     });
     await this.setCatalog(products);
 
+    const method = STORE_PAYMENT_METHODS.find((m) => m.id === input.payment) || STORE_PAYMENT_METHODS[0];
     const now = Date.now();
     const id = "ord_" + crypto.randomUUID();
     const code = await this.nextOrderCode();
@@ -701,7 +804,10 @@ export class AuthStore extends DurableObject {
         address: cleanText(input.customer && input.customer.address, 300),
       },
       note: cleanText(input.note, 300),
-      payment: input.payment === "transfer" ? "transfer" : "cod",
+      payment: method.id,
+      paymentStatus: method.initialStatus,
+      channel: "toko",
+      clientId,
       items: lines,
       total,
       status: "baru",
@@ -709,24 +815,153 @@ export class AuthStore extends DurableObject {
       history,
     };
 
-    this.ctx.storage.sql.exec(
-      `INSERT INTO shop_orders (id, code, email, name, phone, address, note, payment, total, status, items, history, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'baru', ?, ?, ?, ?)`,
-      id,
-      code,
-      order.customer.email,
-      order.customer.name,
-      order.customer.phone,
-      order.customer.address,
-      order.note,
-      order.payment,
+    try {
+      this.ctx.storage.sql.exec(
+        `INSERT INTO shop_orders
+          (id, code, email, name, phone, address, note, payment, payment_status, channel, client_id,
+           total, status, items, history, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'baru', ?, ?, ?, ?)`,
+        id,
+        code,
+        order.customer.email,
+        order.customer.name,
+        order.customer.phone,
+        order.customer.address,
+        order.note,
+        order.payment,
+        order.paymentStatus,
+        order.channel,
+        clientId || null,
+        total,
+        JSON.stringify(lines),
+        JSON.stringify(history),
+        now,
+        now,
+      );
+    } catch (error) {
+      const existing = this.findOrderByClientId(clientId);
+      if (existing && (!existing.email || existing.email === normalizeEmail(customer.email))) {
+        return { ok: true, order: this.orderFromRow(existing), duplicate: true };
+      }
+      throw error;
+    }
+    return { ok: true, order };
+  }
+
+  async recordPosSale(user, input) {
+    const clientId = cleanText(input.clientId, 120);
+    if (!clientId) return { ok: false, error: "ID transaksi kasir wajib ada." };
+    const existing = this.ctx.storage.sql
+      .exec("SELECT * FROM pos_sales WHERE client_id = ? LIMIT 1", clientId)
+      .toArray()[0];
+    if (existing) return { ok: true, sale: this.posSaleFromRow(existing), duplicate: true };
+
+    const { products } = await this.getCatalog();
+    const requested = new Map();
+    for (const it of Array.isArray(input.items) ? input.items : []) {
+      const sku = cleanText(it && it.sku, 60);
+      const qty = Math.max(0, Math.floor(Number(it && it.qty) || 0));
+      if (!sku || qty < 1) continue;
+      requested.set(sku, (requested.get(sku) || 0) + qty);
+    }
+    if (!requested.size) return { ok: false, error: "Item transaksi kasir kosong." };
+
+    const lines = [];
+    for (const [sku, qty] of requested) {
+      const p = products.find((x) => x.sku === sku || x.id === sku);
+      if (!p || p.active === false) return { ok: false, error: "Produk kasir tidak ditemukan: " + sku };
+      if (p.stock < qty) return { ok: false, error: `Stok ${p.name} hanya ${p.stock}` };
+      lines.push({ sku: p.sku || p.id, id: p.id, name: p.name, price: p.price, qty, subtotal: p.price * qty });
+    }
+
+    const subtotal = lines.reduce((sum, l) => sum + l.subtotal, 0);
+    const discount = Math.max(0, Math.min(subtotal, Number(input.discountAmount) || 0));
+    const includeTax = Boolean(input.includeTax);
+    const expectedTax = includeTax ? Math.round((subtotal - discount) * 0.11) : 0;
+    const tax = Math.max(0, Number(input.taxAmount) || 0);
+    if (Math.abs(tax - expectedTax) > 1) {
+      return { ok: false, error: "Perhitungan pajak kasir tidak sesuai." };
+    }
+    const total = subtotal - discount + tax;
+    if (Math.abs(Number(input.total) - total) > 1) {
+      return { ok: false, error: "Total transaksi kasir tidak sesuai katalog." };
+    }
+
+    lines.forEach((l) => {
+      const p = products.find((x) => x.id === l.id);
+      if (p) p.stock = Math.max(0, p.stock - l.qty);
+    });
+    await this.setCatalog(products);
+
+    const payment = input.payment === "qris" ? "qris" : "cash";
+    const now = Date.now();
+    const sale = {
+      id: "pos_" + crypto.randomUUID(),
+      clientId,
+      invoice: cleanText(input.invoice, 80),
+      payment,
+      paymentLabel: cleanText(input.paymentLabel, 80) || (payment === "qris" ? "QRIS / Gateway" : "Tunai"),
+      subtotal,
+      discount,
+      tax,
       total,
+      items: lines,
+      cashier: user ? user.name : "Kasir",
+      source: "kasir",
+      createdAt: new Date(now).toISOString(),
+    };
+    this.ctx.storage.sql.exec(
+      `INSERT INTO pos_sales
+        (id, client_id, invoice, payment, payment_label, subtotal, discount, tax, total, items, cashier, source, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'kasir', ?)`,
+      sale.id,
+      sale.clientId,
+      sale.invoice,
+      sale.payment,
+      sale.paymentLabel,
+      sale.subtotal,
+      sale.discount,
+      sale.tax,
+      sale.total,
       JSON.stringify(lines),
-      JSON.stringify(history),
-      now,
+      sale.cashier,
       now,
     );
-    return { ok: true, order };
+    return { ok: true, sale };
+  }
+
+  posSaleFromRow(row) {
+    if (!row) return null;
+    return {
+      id: row.id,
+      clientId: row.client_id,
+      invoice: row.invoice,
+      payment: row.payment,
+      paymentLabel: row.payment_label,
+      subtotal: row.subtotal,
+      discount: row.discount,
+      tax: row.tax,
+      total: row.total,
+      items: safeJsonArray(row.items),
+      cashier: row.cashier,
+      source: row.source,
+      createdAt: new Date(row.created_at).toISOString(),
+    };
+  }
+
+  async setPaymentStatus(id, status) {
+    if (!PAYMENT_STATUSES.includes(status)) return { ok: false, error: "Status pembayaran tidak valid." };
+    const row = this.ctx.storage.sql
+      .exec("SELECT * FROM shop_orders WHERE id = ? LIMIT 1", id)
+      .toArray()[0];
+    if (!row) return { ok: false, error: "Pesanan tidak ditemukan." };
+    this.ctx.storage.sql.exec(
+      "UPDATE shop_orders SET payment_status = ?, updated_at = ? WHERE id = ?",
+      status,
+      Date.now(),
+      id,
+    );
+    return { ok: true, order: this.orderFromRow({ ...row, payment_status: status }) };
   }
 
   async listOrders(customer, all = false) {
@@ -902,10 +1137,15 @@ async function handleApi(request, env, url) {
   /* ---------------- Katalog bersama ---------------- */
 
   if (path === "/api/catalog" && method === "GET") {
-    const { response } = await requireRole(request, env, ["customer", "owner", "cashier", "warehouse"]);
-    if (response) return response;
     const catalog = await store.getCatalog();
-    return json(catalog);
+    return json({
+      products: catalog.products.map(publicProduct),
+      updatedAt: catalog.updatedAt,
+    });
+  }
+
+  if (path === "/api/payment-methods" && method === "GET") {
+    return json({ methods: STORE_PAYMENT_METHODS });
   }
 
   if (path === "/api/catalog" && method === "PUT") {
@@ -916,6 +1156,17 @@ async function handleApi(request, env, url) {
     if (!result.ok) return json({ error: result.error }, 400);
     await store.log(user, "CATALOG_UPDATE", `${result.products.length} produk`);
     return json({ ok: true, products: result.products });
+  }
+
+  /* ---------------- Penjualan Kasir (satu database dengan katalog) ---------------- */
+
+  if (path === "/api/pos/sales" && method === "POST") {
+    const { user, response } = await requireRole(request, env, ["owner", "cashier"]);
+    if (response) return response;
+    const result = await store.recordPosSale(user, await readJson(request));
+    if (!result.ok) return json({ error: result.error }, 400);
+    await store.log(user, "POS_SALE", `${result.sale.invoice || result.sale.id} (${result.sale.total})`);
+    return json({ sale: result.sale, duplicate: Boolean(result.duplicate) }, result.duplicate ? 200 : 201);
   }
 
   /* ---------------- Pesanan Toko ---------------- */
@@ -934,6 +1185,17 @@ async function handleApi(request, env, url) {
     if (response) return response;
     const all = user.role !== "customer";
     return json({ orders: await store.listOrders(user, all) });
+  }
+
+  const paymentMatch = path.match(/^\/api\/orders\/([^/]+)\/payment$/);
+  if (paymentMatch && method === "PATCH") {
+    const { user, response } = await requireRole(request, env, ["owner", "cashier"]);
+    if (response) return response;
+    const body = await readJson(request);
+    const result = await store.setPaymentStatus(decodeURIComponent(paymentMatch[1]), body.status);
+    if (!result.ok) return json({ error: result.error }, 400);
+    await store.log(user, "ORDER_PAYMENT", `${result.order.code} -> ${body.status}`);
+    return json({ order: result.order });
   }
 
   const orderMatch = path.match(/^\/api\/orders\/([^/]+)$/);
