@@ -8,8 +8,12 @@
 /kasir/*  /page/kasir/:splat  200
 /gudang   /page/gudang/   301
 /gudang/* /page/gudang/:splat 200
-/customer    /page/customer/  301
-/customer/*  /page/customer/:splat  200
+/customer    /toko/  301
+/customer/*  /toko/:splat  301
+
+# Modul Toko mandiri
+/toko      /toko/      200
+/toko/*    /toko/:splat  200
 /admin    /page/admin/    301
 /admin/*  /page/admin/:splat  200
 /login    /page/login/    301

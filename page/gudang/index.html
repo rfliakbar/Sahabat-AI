@@ -710,6 +710,7 @@ posChannel.postMessage({
     <!-- =========================================================================
          JAVASCRIPT LOGIC & POS INTEGRATION BRIDGE
     ========================================================================== -->
+    <script src="/page/shop/store.js"></script>
     <script>
         /**
          * 1. INITIAL MOCK DATA (PRODUK PERTANIAN)
@@ -806,6 +807,33 @@ posChannel.postMessage({
          */
         const posSyncChannel = new BroadcastChannel('agristock_pos_sync');
 
+        // Kategori diturunkan dari nama produk agar katalog Toko tetap rapi.
+        function inferCategory(name = '') {
+            const n = String(name).toLowerCase();
+            if (n.includes('benih')) return 'Benih';
+            if (n.includes('pupuk')) return 'Pupuk';
+            if (n.includes('pestisida') || n.includes('herbisida') || n.includes('insektisida')) return 'Pestisida';
+            if (n.includes('beras') || n.includes('jagung pipil') || n.includes('hasil tani')) return 'Hasil Tani';
+            if (n.includes('sprayer') || n.includes('cangkul') || n.includes('selang') || n.includes('gembor')) return 'Alat Pertanian';
+            return 'Lainnya';
+        }
+
+        // Dorong katalog ke backend bersama agar Toko (/toko/) ikut terbarui.
+        function pushCatalogToBackend(items) {
+            if (!window.AgriShop || typeof window.AgriShop.pushCatalog !== 'function') return;
+            window.AgriShop.pushCatalog(items.map((p) => ({
+                id: p.id,
+                sku: p.sku,
+                name: p.name,
+                category: inferCategory(p.name),
+                price: p.price,
+                unit: 'unit',
+                stock: p.availableStock,
+                image: p.image,
+                active: true
+            })));
+        }
+
         // Kirim pembaruan katalog & stok ke sistem kasir setiap kali ada perubahan di gudang
         function broadcastCatalogToPOS(reason = 'CATALOG_UPDATED') {
             const payload = {
@@ -824,6 +852,9 @@ posChannel.postMessage({
 
             posSyncChannel.postMessage(payload);
             window.dispatchEvent(new CustomEvent('agristock:catalog-updated', { detail: payload }));
+
+            // Toko (/toko/) membaca katalog dari backend yang sama.
+            pushCatalogToBackend(payload.products);
 
             // Cermin snapshot untuk modul ERP (AgriERP) agar stok tetap terbaru
             try {

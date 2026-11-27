@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Masuk Toko — Toko Tani</title>
+<meta name="description" content="Masuk atau daftar akun Toko Tani untuk berbelanja saprotan dan hasil tani.">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: {
+      fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], mono: ['"JetBrains Mono"', 'monospace'] },
+      colors: { agri: { 50:'#f2fbf5',100:'#e1f7e8',200:'#c4edd2',300:'#96deaf',400:'#5fc684',500:'#38ab63',600:'#278b4d',700:'#216e3f',800:'#1e5835',900:'#1a482d',950:'#0d2718' } }
+    } }
+  };
+</script>
+<style>
+  .hide{display:none !important}
+  .field{width:100%;padding:.625rem .8rem;border:1px solid #e2e8f0;border-radius:.75rem;font-size:.875rem;background:#fff;outline:none;transition:border-color .15s,box-shadow .15s}
+  .field:focus{border-color:#5fc684;box-shadow:0 0 0 3px #c4edd2}
+  .tab{flex:1;padding:.55rem .75rem;border-radius:.6rem;font-size:.75rem;font-weight:800;color:#64748b;transition:background .15s,color .15s}
+  .tab.on{background:#fff;color:#1a482d;box-shadow:0 1px 2px rgb(15 23 42/.08)}
+</style>
+</head>
+<body class="min-h-screen bg-agri-950 font-sans text-slate-800 antialiased flex flex-col">
+
+<header class="bg-agri-950">
+  <div class="max-w-5xl mx-auto px-5 py-4 flex items-center justify-between gap-3">
+    <a href="/toko/" class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-agri-400 to-agri-600 flex items-center justify-center shadow-lg shadow-agri-900/40">
+        <i data-lucide="sprout" class="w-5 h-5 text-white"></i>
+      </div>
+      <div>
+        <p class="font-extrabold text-lg leading-none tracking-tight text-white">Toko <span class="text-agri-300">Tani</span></p>
+        <p class="text-[10.5px] text-agri-300 mt-1">Saprotan &amp; Hasil Tani</p>
+      </div>
+    </a>
+    <a href="/login/" class="text-[11.5px] font-bold text-agri-200 hover:text-white flex items-center gap-1.5 px-3 py-2 rounded-lg border border-agri-800 hover:bg-agri-900 transition">
+      <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Masuk Staf
+    </a>
+  </div>
+</header>
+
+<main class="flex-1 flex items-start sm:items-center justify-center px-4 py-8 sm:py-12">
+  <div class="w-full max-w-md">
+    <div class="bg-white rounded-2xl shadow-2xl shadow-agri-950/30 p-6 sm:p-7">
+      <div class="text-center">
+        <div class="w-12 h-12 mx-auto rounded-2xl bg-agri-50 border border-agri-200 flex items-center justify-center">
+          <i data-lucide="store" class="w-6 h-6 text-agri-700"></i>
+        </div>
+        <h1 class="mt-3 text-lg font-extrabold text-agri-950">Masuk ke Toko Tani</h1>
+        <p class="mt-1 text-[12.5px] text-slate-500">Belanja saprotan, lacak pesanan, dan kelola akun Anda.</p>
+      </div>
+
+      <div id="resumeCard" class="hide mt-5 rounded-xl border border-agri-200 bg-agri-50 p-3.5">
+        <div class="flex items-center gap-3">
+          <div id="resumeAvatar" class="w-10 h-10 rounded-full bg-agri-700 text-white font-extrabold flex items-center justify-center">C</div>
+          <div class="min-w-0">
+            <p id="resumeName" class="text-[12.5px] font-extrabold text-agri-950 truncate">Customer</p>
+            <p id="resumeEmail" class="text-[11px] text-slate-500 truncate"></p>
+          </div>
+        </div>
+        <div class="mt-3 flex gap-2">
+          <a id="resumeGo" href="/toko/" class="flex-1 py-2 rounded-lg bg-agri-700 hover:bg-agri-800 text-white text-[12px] font-extrabold text-center transition">Lanjut belanja</a>
+          <button id="resumeLogout" type="button" class="px-3 py-2 rounded-lg border border-slate-200 hover:border-rose-300 hover:text-rose-600 text-[12px] font-bold text-slate-600 transition">Keluar</button>
+        </div>
+      </div>
+
+      <div class="mt-5 bg-slate-100 rounded-xl p-1 flex gap-1">
+        <button id="tabLogin" type="button" class="tab on">Masuk</button>
+        <button id="tabRegister" type="button" class="tab">Daftar</button>
+      </div>
+
+      <!-- LOGIN -->
+      <form id="loginForm" class="mt-4 space-y-3">
+        <label class="block">
+          <span class="text-[11.5px] font-bold text-slate-600">Email</span>
+          <input id="loginEmail" name="email" type="email" required autocomplete="email" class="field mt-1" placeholder="nama@email.com">
+        </label>
+        <label class="block">
+          <span class="text-[11.5px] font-bold text-slate-600">Password</span>
+          <div class="relative mt-1">
+            <input id="loginPassword" name="password" type="password" required autocomplete="current-password" class="field pr-10" placeholder="••••••••">
+            <button id="togglePw" type="button" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-slate-400 hover:text-agri-700" title="Tampilkan password">
+              <i data-lucide="eye" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </label>
+        <p id="loginError" class="hide text-[11.5px] font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2"></p>
+        <button class="w-full py-3 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-sm font-extrabold transition flex items-center justify-center gap-2">
+          <i data-lucide="log-in" class="w-4 h-4"></i> <span id="loginBtnText">Masuk</span>
+        </button>
+      </form>
+
+      <!-- REGISTER -->
+      <form id="registerForm" class="mt-4 space-y-3 hide">
+        <label class="block">
+          <span class="text-[11.5px] font-bold text-slate-600">Nama lengkap</span>
+          <input name="name" required autocomplete="name" class="field mt-1" placeholder="Contoh: Sutrisno">
+        </label>
+        <div class="grid grid-cols-2 gap-2.5">
+          <label class="block">
+            <span class="text-[11.5px] font-bold text-slate-600">Email</span>
+            <input name="email" type="email" required autocomplete="email" class="field mt-1" placeholder="nama@email.com">
+          </label>
+          <label class="block">
+            <span class="text-[11.5px] font-bold text-slate-600">No. HP</span>
+            <input name="phone" required inputmode="tel" autocomplete="tel" class="field mt-1" placeholder="08xxxxxxxxxx">
+          </label>
+        </div>
+        <label class="block">
+          <span class="text-[11.5px] font-bold text-slate-600">Password</span>
+          <input name="password" type="password" required minlength="6" autocomplete="new-password" class="field mt-1" placeholder="Minimal 6 karakter">
+        </label>
+        <p id="registerError" class="hide text-[11.5px] font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2"></p>
+        <button class="w-full py-3 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-sm font-extrabold transition flex items-center justify-center gap-2">
+          <i data-lucide="user-plus" class="w-4 h-4"></i> Buat akun
+        </button>
+      </form>
+
+      <a href="/toko/" class="mt-4 block text-center text-[11.5px] font-bold text-slate-500 hover:text-agri-700">← Kembali ke katalog</a>
+    </div>
+
+    <p class="mt-4 text-center text-[11px] text-agri-300/80">
+      Website utama: <a href="/" class="font-mono hover:text-white">Sahabat-AI / AgriSuite</a>
+    </p>
+  </div>
+</main>
+
+<script src="/page/shop/store.js"></script>
+<script>
+(function () {
+  const S = window.AgriShop;
+  const $ = (id) => document.getElementById(id);
+  const icons = () => window.lucide && window.lucide.createIcons();
+  const params = new URLSearchParams(location.search);
+  const next = params.get('next') || '';
+
+  function show(el, on) { el.classList.toggle('hide', !on); }
+  function setError(id, msg) {
+    const el = $(id);
+    if (!msg) { el.classList.add('hide'); el.textContent = ''; return; }
+    el.textContent = msg; el.classList.remove('hide');
+  }
+  function target() {
+    if (next) {
+      try {
+        const decoded = decodeURIComponent(next);
+        if (decoded.startsWith('/') && !decoded.startsWith('//') && decoded.indexOf('/toko/') === 0) return decoded;
+      } catch (e) { /* abaikan */ }
+    }
+    return '/toko/';
+  }
+
+  function tab(name) {
+    const login = name === 'login';
+    $('tabLogin').classList.toggle('on', login);
+    $('tabRegister').classList.toggle('on', !login);
+    show($('loginForm'), login);
+    show($('registerForm'), !login);
+    setError('loginError', ''); setError('registerError', '');
+    icons();
+  }
+  $('tabLogin').onclick = () => tab('login');
+  $('tabRegister').onclick = () => tab('register');
+
+  $('togglePw').onclick = () => {
+    const p = $('loginPassword');
+    p.type = p.type === 'password' ? 'text' : 'password';
+    icons();
+  };
+
+  $('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    setError('loginError', '');
+    const btn = $('loginBtnText');
+    const prev = btn.textContent;
+    btn.textContent = 'Memproses…';
+    try {
+      await S.loginCustomer($('loginEmail').value.trim(), $('loginPassword').value);
+      location.replace(target());
+    } catch (err) {
+      setError('loginError', err.message);
+    } finally {
+      btn.textContent = prev;
+    }
+  });
+
+  $('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    setError('registerError', '');
+    const f = new FormData(e.target);
+    const btn = e.target.querySelector('button[type="submit"]') || e.target.querySelector('button:last-of-type');
+    try {
+      await S.registerCustomer({
+        name: f.get('name'), email: f.get('email'), phone: f.get('phone'), password: f.get('password')
+      });
+      location.replace(target());
+    } catch (err) {
+      setError('registerError', err.message);
+    }
+  });
+
+  /* bila sudah punya sesi customer, tampilkan kartu lanjut */
+  (async function () {
+    const me = await S.customerMe();
+    if (!me) return;
+    show($('resumeCard'), true);
+    $('resumeName').textContent = me.name || 'Customer';
+    $('resumeEmail').textContent = me.email || '';
+    $('resumeAvatar').textContent = (me.name || '?').trim().charAt(0).toUpperCase();
+    $('resumeGo').href = target();
+    $('resumeLogout').onclick = async () => { await S.logoutCustomer(); location.reload(); };
+  })();
+
+  icons();
+})();
+</script>
+</body>
+</html>

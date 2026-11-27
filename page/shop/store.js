@@ -226,7 +226,7 @@
   const STATUS_META = {
     baru: { label: 'Baru', cls: 'bg-amber-50 text-amber-700 border-amber-200' },
     diproses: { label: 'Diproses', cls: 'bg-blue-50 text-blue-700 border-blue-200' },
-      dikirim: { label: 'Dikirim', cls: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+    dikirim: { label: 'Dikirim', cls: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
     selesai: { label: 'Selesai', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
     batal: { label: 'Dibatalkan', cls: 'bg-rose-50 text-rose-700 border-rose-200' }
   };
@@ -307,10 +307,10 @@
     admin: '/page/erp/',
     cashier: '/page/kasir/',
     warehouse: '/page/gudang/',
-    customer: '/page/customer/'
+    customer: '/toko/'
   };
 
-  function landingFor(role) { return STAFF_LANDING[role] || '/page/customer/'; }
+  function landingFor(role) { return STAFF_LANDING[role] || '/toko/'; }
 
   async function apiRequest(path, options) {
     const opts = Object.assign({ credentials: 'same-origin' }, options || {});
@@ -323,6 +323,78 @@
     try { data = await res.json(); } catch (e) { data = {}; }
     if (!res.ok) throw new Error(data.error || 'Permintaan gagal. Status ' + res.status);
     return data;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Toko (Customer) — autentikasi & data melalui backend yang sama     */
+  /* ------------------------------------------------------------------ */
+
+  async function customerMe() {
+    try {
+      const data = await apiRequest('/api/customer/me', { method: 'GET' });
+      if (!data.user) return null;
+      setSession({ role: 'customer', name: data.user.name, email: data.user.email, phone: data.user.phone, id: data.user.id });
+      return data.user;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function loginCustomer(email, password) {
+    const data = await apiRequest('/api/customer/login', {
+      method: 'POST',
+      body: { email, password }
+    });
+    const u = data.user;
+    setSession({ role: 'customer', name: u.name, email: u.email, phone: u.phone, id: u.id });
+    return u;
+  }
+
+  async function registerCustomer({ name, email, phone, password }) {
+    const data = await apiRequest('/api/customer/register', {
+      method: 'POST',
+      body: { name, email, phone, password }
+    });
+    const u = data.user;
+    setSession({ role: 'customer', name: u.name, email: u.email, phone: u.phone, id: u.id });
+    return u;
+  }
+
+  async function logoutCustomer() {
+    try { await apiRequest('/api/auth/logout', { method: 'POST' }); } catch (e) { /* abaikan */ }
+    clearSession();
+  }
+
+  /** Ambil katalog dari backend (sumber yang dipakai Gudang). */
+  async function fetchCatalog() {
+    const data = await apiRequest('/api/catalog', { method: 'GET' });
+    return Array.isArray(data.products) ? data.products : [];
+  }
+
+  /** Simpan katalog dari halaman utama (Gudang) ke backend. */
+  async function pushCatalog(products) {
+    if (!Array.isArray(products)) return null;
+    try {
+      const data = await apiRequest('/api/catalog', { method: 'PUT', body: { products } });
+      return data.products || null;
+    } catch (e) {
+      return null; // halaman tetap jalan walau backend sedang offline
+    }
+  }
+
+  async function fetchOrders() {
+    const data = await apiRequest('/api/orders', { method: 'GET' });
+    return Array.isArray(data.orders) ? data.orders : [];
+  }
+
+  async function createOrderRemote(payload) {
+    const data = await apiRequest('/api/orders', { method: 'POST', body: payload });
+    return data.order;
+  }
+
+  async function updateOrderStatusRemote(id, status) {
+    const data = await apiRequest('/api/orders/' + encodeURIComponent(id), { method: 'PATCH', body: { status } });
+    return data.order;
   }
 
   /** Login staf: role asli disimpan di erp_role, role 'admin' dipakai panel lama. */
@@ -362,7 +434,8 @@
     const s = getSession();
     if (!s) {
       const next = encodeURIComponent(nextPath || location.pathname);
-      location.replace('/page/login/?next=' + next);
+      const wantsCustomer = (Array.isArray(role) ? role : [role]).includes('customer');
+      location.replace((wantsCustomer ? '/toko/login/' : '/page/login/') + '?next=' + next);
       return null;
     }
     const allowed = Array.isArray(role) ? role : [role];
@@ -389,6 +462,8 @@
     upsertProduct, toggleProduct, resetDemo, stats,
     login, isLoggedIn, logout,
     isAdminEmail, register, loginAccount, loginStaff, setSession, getSession, clearSession,
-    logoutAll, logoutAllAsync, requireRole, landingFor, ordersOf
+    logoutAll, logoutAllAsync, requireRole, landingFor, ordersOf,
+    customerMe, loginCustomer, registerCustomer, logoutCustomer,
+    fetchCatalog, pushCatalog, fetchOrders, createOrderRemote, updateOrderStatusRemote
   };
 })(window);

@@ -91,7 +91,7 @@
           </div>
         </div>
         <div class="mt-4 grid gap-2">
-          <a id="resumeGo" href="/page/customer/" class="py-2.5 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-sm font-extrabold text-center flex items-center justify-center gap-2 transition">
+          <a id="resumeGo" href="/toko/" class="py-2.5 rounded-xl bg-agri-700 hover:bg-agri-800 text-white text-sm font-extrabold text-center flex items-center justify-center gap-2 transition">
             <i data-lucide="arrow-right" class="w-4 h-4"></i> Lanjutkan
           </a>
           <button id="resumeLogout" class="py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-[12.5px] font-bold text-slate-600 transition">Keluar &amp; ganti akun</button>
@@ -250,8 +250,8 @@
         const user = await S.loginStaff(email, password);
         go(user.role, user.redirect);
       } else {
-        const s = S.loginAccount(email, password);
-        go(s.role);
+        const user = await S.loginCustomer(email, password);
+        go('customer', user.redirect);
       }
     } catch (err) {
       setError('loginError', err.message);
@@ -261,26 +261,25 @@
   });
 
   /* register */
-  $('registerForm').addEventListener('submit', (e) => {
+  $('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     setError('registerError', '');
     const f = new FormData(e.target);
     try {
-      const acc = S.register({
+      await S.registerCustomer({
         name: f.get('name'), email: f.get('email'), phone: f.get('phone'), password: f.get('password')
       });
       go('customer');
-      return acc;
     } catch (err) { setError('registerError', err.message); }
   });
 
   const LANDING = {
     admin: '/page/erp/', owner: '/page/erp/', cashier: '/page/kasir/',
-    warehouse: '/page/gudang/', customer: '/page/customer/'
+    warehouse: '/page/gudang/', customer: '/toko/'
   };
 
   function go(role, forcedTarget) {
-    const target = forcedTarget || LANDING[role] || '/page/customer/';
+    const target = forcedTarget || LANDING[role] || '/toko/';
     const home = target.replace(/\/$/, '');
     if (next && decodeURIComponent(next).indexOf(home) === 0) {
       location.replace(decodeURIComponent(next));
@@ -296,7 +295,7 @@
     $('resumeName').textContent = session.name || (session.role === 'admin' ? 'Admin Toko Tani' : 'Customer');
     $('resumeEmail').textContent = session.email || '';
     $('resumeAvatar').textContent = (session.name || '?').trim().charAt(0).toUpperCase();
-    $('resumeGo').href = session.redirect || LANDING[session.role] || '/page/customer/';
+    $('resumeGo').href = session.redirect || LANDING[session.role] || '/toko/';
     $('resumeLogout').onclick = () => { S.logoutAll(); location.reload(); };
   }
 

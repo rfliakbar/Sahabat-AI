@@ -18,13 +18,54 @@ const ROLE_LANDING = {
   owner: "/erp/",
   cashier: "/kasir/",
   warehouse: "/gudang/",
+  customer: "/toko/",
 };
 
 const ROLE_LABEL = {
   owner: "Pemilik",
   cashier: "Kasir",
   warehouse: "Gudang",
+  customer: "Customer",
 };
+
+const CUSTOMER_LANDING = "/toko/";
+
+/**
+ * Katalog awal. Dipakai HANYA bila Durable Object belum punya katalog
+ * (mis. sebelum halaman Gudang pernah menyimpan produk).
+ */
+const SEED_CATALOG = [
+  { id: "PRD-1001", sku: "BNH-PADI-32", name: "Benih Padi Unggul Inpari 32 (5kg)", category: "Benih", price: 75000, unit: "karung", stock: 42, image: "https://placehold.co/600x450/278b4d/ffffff?text=Benih+Padi", active: true },
+  { id: "PRD-1002", sku: "PPK-NPK-16", name: "Pupuk NPK Mutiara 16-16-16 (1kg)", category: "Pupuk", price: 22000, unit: "karung", stock: 120, image: "https://placehold.co/600x450/38ab63/ffffff?text=Pupuk+NPK", active: true },
+  { id: "PRD-1003", sku: "PST-ORG-500", name: "Pestisida Nabati Neem Oil 500ml", category: "Pestisida", price: 48000, unit: "botol", stock: 35, image: "https://placehold.co/600x450/1e5835/ffffff?text=Pestisida+Nabati", active: true },
+  { id: "PRD-1004", sku: "ALT-SPRY-16L", name: "Tangki Sprayer Elektrik Pertanian 16L", category: "Alat Pertanian", price: 465000, unit: "unit", stock: 8, image: "https://placehold.co/600x450/216e3f/ffffff?text=Sprayer+16L", active: true },
+  { id: "PRD-1005", sku: "PPK-UREA-50", name: "Pupuk Urea Premium (50kg)", category: "Pupuk", price: 185000, unit: "karung", stock: 26, image: "https://placehold.co/600x450/5fc684/ffffff?text=Urea+50kg", active: true },
+  { id: "PRD-1006", sku: "BNH-JAGUNG-1", name: "Benih Jagung Hibrida Bisi-18 (1kg)", category: "Benih", price: 62000, unit: "pak", stock: 54, image: "https://placehold.co/600x450/96deaf/0d2718?text=Jagung+Bisi-18", active: true },
+  { id: "PRD-1007", sku: "PST-GLIF-1L", name: "Herbisida Glifosat 480 SL (1L)", category: "Pestisida", price: 58000, unit: "botol", stock: 61, image: "https://placehold.co/600x450/278b4d/ffffff?text=Glifosat", active: true },
+  { id: "PRD-1008", sku: "ALT-CANGKUL", name: "Cangkul Baja Handle Kayu", category: "Alat Pertanian", price: 95000, unit: "unit", stock: 19, image: "https://placehold.co/600x450/1a482d/ffffff?text=Cangkul+Baja", active: true },
+  { id: "PRD-1009", sku: "ALT-SELANG-50", name: "Selang Irigasi PE 1 inch (50m)", category: "Alat Pertanian", price: 210000, unit: "roll", stock: 11, image: "https://placehold.co/600x450/38ab63/ffffff?text=Selang+Irigasi", active: true },
+  { id: "PRD-1010", sku: "HSL-BERAS-25", name: "Beras Premium Hasil Tani (25kg)", category: "Hasil Tani", price: 320000, unit: "karung", stock: 33, image: "https://placehold.co/600x450/f3efe6/5c4d3c?text=Beras+Premium", active: true },
+  { id: "PRD-1011", sku: "PPK-KMPK-25", name: "Pupuk KCL / MOP (25kg)", category: "Pupuk", price: 145000, unit: "karung", stock: 24, image: "https://placehold.co/600x450/216e3f/ffffff?text=Pupuk+KCL", active: true },
+  { id: "PRD-1012", sku: "PST-INSEK-250", name: "Insektisida Cair 250ml", category: "Pestisida", price: 39000, unit: "botol", stock: 47, image: "https://placehold.co/600x450/5fc684/0d2718?text=Insektisida", active: true },
+  { id: "PRD-1013", sku: "HSL-JAGUNG-50", name: "Jagung Pipil Kering (50kg)", category: "Hasil Tani", price: 385000, unit: "karung", stock: 14, image: "https://placehold.co/600x450/f3efe6/5c4d3c?text=Jagung+Pipil", active: true },
+  { id: "PRD-1014", sku: "ALT-GEMBOR", name: "Gembor Semprot 5L", category: "Alat Pertanian", price: 68000, unit: "unit", stock: 28, image: "https://placehold.co/600x450/1e5835/ffffff?text=Gembor+5L", active: true },
+];
+
+function publicCustomer(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    phone: row.phone || "",
+    role: "customer",
+    role_label: ROLE_LABEL.customer,
+    active: Boolean(row.active),
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    redirect: CUSTOMER_LANDING,
+  };
+}
 
 /* ------------------------------------------------------------------ */
 /* Kriptografi                                                         */
@@ -189,6 +230,7 @@ const EXACT_ALIASES = {
   "/kasir": "/page/kasir/",
   "/gudang": "/page/gudang/",
   "/admin": "/page/admin/",
+  "/toko": "/toko/",
 };
 
 function resolveInternalPath(pathname) {
@@ -201,6 +243,8 @@ function resolveInternalPath(pathname) {
 
 function allowedRolesFor(pathname) {
   const isUnder = (base) => pathname === base || pathname.startsWith(`${base}/`);
+  if (isUnder("/toko/login")) return null;
+  if (isUnder("/toko")) return ["customer"];
   if (isUnder("/page/erp")) return ["owner"];
   if (isUnder("/page/kasir")) return ["owner", "cashier"];
   if (isUnder("/page/gudang")) return ["owner", "warehouse"];
@@ -244,6 +288,43 @@ export class AuthStore extends DurableObject {
           action TEXT NOT NULL,
           detail TEXT,
           created_at INTEGER NOT NULL
+        )
+      `);
+      this.ctx.storage.sql.exec(`
+        CREATE TABLE IF NOT EXISTS customers (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          email TEXT NOT NULL UNIQUE,
+          phone TEXT,
+          password_hash TEXT NOT NULL,
+          active INTEGER NOT NULL DEFAULT 1,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        )
+      `);
+      this.ctx.storage.sql.exec(`
+        CREATE TABLE IF NOT EXISTS catalog (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          data TEXT NOT NULL,
+          updated_at INTEGER NOT NULL
+        )
+      `);
+      this.ctx.storage.sql.exec(`
+        CREATE TABLE IF NOT EXISTS shop_orders (
+          id TEXT PRIMARY KEY,
+          code TEXT NOT NULL UNIQUE,
+          email TEXT,
+          name TEXT,
+          phone TEXT,
+          address TEXT,
+          note TEXT,
+          payment TEXT,
+          total INTEGER NOT NULL,
+          status TEXT NOT NULL,
+          items TEXT NOT NULL,
+          history TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
         )
       `);
       await this.seedOwner();
@@ -310,7 +391,19 @@ export class AuthStore extends DurableObject {
         now,
       )
       .toArray()[0];
-    return row ? publicUser(row) : null;
+    if (row) return publicUser(row);
+
+    const customer = this.ctx.storage.sql
+      .exec(
+        `SELECT c.* FROM sessions s
+         JOIN customers c ON c.id = s.user_id
+         WHERE s.token_hash = ? AND s.expires_at > ? AND c.active = 1
+         LIMIT 1`,
+        tokenHash,
+        now,
+      )
+      .toArray()[0];
+    return customer ? publicCustomer(customer) : null;
   }
 
   async destroySession(token) {
@@ -440,6 +533,254 @@ export class AuthStore extends DurableObject {
       )
       .toArray();
   }
+
+  /* ------------------------------------------------------------------ */
+  /* Customer (Toko) — akun, katalog, dan pesanan                       */
+  /* ------------------------------------------------------------------ */
+
+  async findCustomerByEmail(email) {
+    return this.ctx.storage.sql
+      .exec("SELECT * FROM customers WHERE email = ? LIMIT 1", normalizeEmail(email))
+      .toArray()[0];
+  }
+
+  async registerCustomer(input) {
+    const name = cleanText(input.name, 100);
+    const email = normalizeEmail(input.email);
+    const phone = cleanText(input.phone, 30);
+    const password = typeof input.password === "string" ? input.password : "";
+
+    if (name.length < 2) return { ok: false, error: "Nama lengkap minimal 2 karakter." };
+    if (!isValidEmail(email)) return { ok: false, error: "Email tidak valid." };
+    if (phone.replace(/\D/g, "").length < 8) return { ok: false, error: "Nomor HP tidak valid." };
+    if (password.length < 6) return { ok: false, error: "Password minimal 6 karakter." };
+    if (await this.findUserByEmail(email)) {
+      return { ok: false, error: "Email tersebut dipakai akun staf. Gunakan email lain." };
+    }
+    if (await this.findCustomerByEmail(email)) {
+      return { ok: false, error: "Email sudah terdaftar. Silakan masuk." };
+    }
+
+    const id = "cus_" + crypto.randomUUID();
+    const now = Date.now();
+    this.ctx.storage.sql.exec(
+      `INSERT INTO customers (id, name, email, phone, password_hash, active, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 1, ?, ?)`,
+      id,
+      name,
+      email,
+      phone,
+      await hashPassword(password),
+      now,
+      now,
+    );
+    return { ok: true, customer: publicCustomer(await this.findCustomerByEmail(email)) };
+  }
+
+  async authenticateCustomer(email, password) {
+    const row = await this.findCustomerByEmail(email);
+    if (!row || !row.active) return { ok: false, error: "Email atau password salah." };
+    const valid = await verifyPassword(password, row.password_hash);
+    if (!valid) return { ok: false, error: "Email atau password salah." };
+    return { ok: true, customer: publicCustomer(row) };
+  }
+
+  async getCatalog() {
+    const row = this.ctx.storage.sql
+      .exec("SELECT data, updated_at FROM catalog WHERE id = 1 LIMIT 1")
+      .toArray()[0];
+    if (row) {
+      try {
+        return { products: JSON.parse(row.data), updatedAt: row.updated_at };
+      } catch {
+        /* data rusak -> seed ulang */
+      }
+    }
+    const now = Date.now();
+    const products = SEED_CATALOG.map((p) => ({ ...p }));
+    this.ctx.storage.sql.exec(
+      "INSERT OR REPLACE INTO catalog (id, data, updated_at) VALUES (1, ?, ?)",
+      JSON.stringify(products),
+      now,
+    );
+    return { products, updatedAt: now };
+  }
+
+  async setCatalog(inputProducts) {
+    if (!Array.isArray(inputProducts)) {
+      return { ok: false, error: "Data katalog tidak valid." };
+    }
+    const products = inputProducts
+      .filter((p) => p && p.id && p.name)
+      .map((p) => ({
+        id: String(p.id),
+        sku: cleanText(p.sku, 60),
+        name: cleanText(p.name, 160),
+        category: cleanText(p.category || "Lainnya", 60) || "Lainnya",
+        price: Math.max(0, Number(p.price) || 0),
+        unit: cleanText(p.unit || "unit", 30) || "unit",
+        stock: Math.max(0, Number(p.stock) || 0),
+        image: typeof p.image === "string" ? p.image.slice(0, 500) : "",
+        active: p.active !== false,
+        updatedAt: Date.now(),
+      }));
+    this.ctx.storage.sql.exec(
+      "INSERT OR REPLACE INTO catalog (id, data, updated_at) VALUES (1, ?, ?)",
+      JSON.stringify(products),
+      Date.now(),
+    );
+    return { ok: true, products };
+  }
+
+  orderFromRow(row) {
+    if (!row) return null;
+    return {
+      id: row.id,
+      code: row.code,
+      customer: { name: row.name, email: row.email, phone: row.phone, address: row.address },
+      note: row.note,
+      payment: row.payment,
+      total: row.total,
+      status: row.status,
+      items: safeJsonArray(row.items),
+      history: safeJsonArray(row.history),
+      createdAt: new Date(row.created_at).toISOString(),
+    };
+  }
+
+  async nextOrderCode() {
+    const d = new Date();
+    const prefix = `AGS-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+    const row = this.ctx.storage.sql
+      .exec("SELECT COUNT(*) AS n FROM shop_orders WHERE code LIKE ?", `${prefix}-%`)
+      .toArray()[0];
+    return `${prefix}-${String((Number(row && row.n) || 0) + 1).padStart(3, "0")}`;
+  }
+
+  async createOrder(customer, input) {
+    const items = Array.isArray(input.items) ? input.items : [];
+    if (!items.length) return { ok: false, error: "Keranjang kosong." };
+
+    const { products } = await this.getCatalog();
+    const lines = [];
+    for (const it of items) {
+      const qty = Math.max(0, Math.floor(Number(it.qty) || 0));
+      const p = products.find((x) => x.id === it.id);
+      if (!p || p.active === false) return { ok: false, error: "Produk tidak tersedia: " + it.id };
+      if (qty < 1) continue;
+      if (p.stock < qty) return { ok: false, error: `Stok ${p.name} hanya ${p.stock}` };
+      lines.push({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        qty,
+        unit: p.unit,
+        subtotal: p.price * qty,
+      });
+    }
+    if (!lines.length) return { ok: false, error: "Keranjang kosong." };
+
+    const total = lines.reduce((sum, l) => sum + l.subtotal, 0);
+    lines.forEach((l) => {
+      const p = products.find((x) => x.id === l.id);
+      if (p) p.stock = Math.max(0, p.stock - l.qty);
+    });
+    await this.setCatalog(products);
+
+    const now = Date.now();
+    const id = "ord_" + crypto.randomUUID();
+    const code = await this.nextOrderCode();
+    const history = [{ status: "baru", at: new Date(now).toISOString() }];
+    const order = {
+      id,
+      code,
+      customer: {
+        name: cleanText(input.customer && input.customer.name, 100),
+        email: normalizeEmail(customer.email),
+        phone: cleanText(input.customer && input.customer.phone, 30),
+        address: cleanText(input.customer && input.customer.address, 300),
+      },
+      note: cleanText(input.note, 300),
+      payment: input.payment === "transfer" ? "transfer" : "cod",
+      items: lines,
+      total,
+      status: "baru",
+      createdAt: new Date(now).toISOString(),
+      history,
+    };
+
+    this.ctx.storage.sql.exec(
+      `INSERT INTO shop_orders (id, code, email, name, phone, address, note, payment, total, status, items, history, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'baru', ?, ?, ?, ?)`,
+      id,
+      code,
+      order.customer.email,
+      order.customer.name,
+      order.customer.phone,
+      order.customer.address,
+      order.note,
+      order.payment,
+      total,
+      JSON.stringify(lines),
+      JSON.stringify(history),
+      now,
+      now,
+    );
+    return { ok: true, order };
+  }
+
+  async listOrders(customer, all = false) {
+    const rows = all
+      ? this.ctx.storage.sql
+          .exec("SELECT * FROM shop_orders ORDER BY created_at DESC LIMIT 500")
+          .toArray()
+      : this.ctx.storage.sql
+          .exec(
+            "SELECT * FROM shop_orders WHERE email = ? OR phone = ? ORDER BY created_at DESC LIMIT 200",
+            normalizeEmail(customer.email),
+            String(customer.phone || ""),
+          )
+          .toArray();
+    return rows.map((row) => this.orderFromRow(row));
+  }
+
+  async updateOrderStatus(id, status) {
+    const valid = ["baru", "diproses", "dikirim", "selesai", "batal"];
+    if (!valid.includes(status)) return { ok: false, error: "Status tidak valid." };
+    const row = this.ctx.storage.sql
+      .exec("SELECT * FROM shop_orders WHERE id = ? LIMIT 1", id)
+      .toArray()[0];
+    if (!row) return { ok: false, error: "Pesanan tidak ditemukan." };
+
+    if (status === "batal" && row.status !== "batal") {
+      const { products } = await this.getCatalog();
+      safeJsonArray(row.items).forEach((l) => {
+        const p = products.find((x) => x.id === l.id);
+        if (p) p.stock += Number(l.qty) || 0;
+      });
+      await this.setCatalog(products);
+    }
+
+    const history = safeJsonArray(row.history);
+    history.push({ status, at: new Date().toISOString() });
+    this.ctx.storage.sql.exec(
+      "UPDATE shop_orders SET status = ?, history = ?, updated_at = ? WHERE id = ?",
+      status,
+      JSON.stringify(history),
+      Date.now(),
+      id,
+    );
+    return { ok: true, order: this.orderFromRow({ ...row, status, history }) };
+  }
+}
+
+function safeJsonArray(value) {
+  try {
+    const parsed = JSON.parse(value || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -522,6 +863,90 @@ async function handleApi(request, env, url) {
     return json({ user });
   }
 
+  /* ---------------- Customer (Toko) ---------------- */
+
+  if (path === "/api/customer/register" && method === "POST") {
+    const result = await store.registerCustomer(await readJson(request));
+    if (!result.ok) return json({ error: result.error }, 400);
+    const token = await store.createSession(result.customer.id);
+    await store.log(result.customer, "CUSTOMER_REGISTER", result.customer.email);
+    return json(
+      { user: result.customer, redirect: CUSTOMER_LANDING },
+      201,
+      { "Set-Cookie": sessionCookie(token, url) },
+    );
+  }
+
+  if (path === "/api/customer/login" && method === "POST") {
+    const { email, password } = await readJson(request);
+    if (!email || !password) {
+      return json({ error: "Email dan password wajib diisi." }, 400);
+    }
+    const result = await store.authenticateCustomer(email, password);
+    if (!result.ok) return json({ error: result.error }, 401);
+    const token = await store.createSession(result.customer.id);
+    await store.log(result.customer, "CUSTOMER_LOGIN", result.customer.email);
+    return json(
+      { user: result.customer, redirect: CUSTOMER_LANDING },
+      200,
+      { "Set-Cookie": sessionCookie(token, url) },
+    );
+  }
+
+  if (path === "/api/customer/me" && method === "GET") {
+    const user = await currentUser(request, env);
+    if (!user || user.role !== "customer") return json({ user: null });
+    return json({ user });
+  }
+
+  /* ---------------- Katalog bersama ---------------- */
+
+  if (path === "/api/catalog" && method === "GET") {
+    const { response } = await requireRole(request, env, ["customer", "owner", "cashier", "warehouse"]);
+    if (response) return response;
+    const catalog = await store.getCatalog();
+    return json(catalog);
+  }
+
+  if (path === "/api/catalog" && method === "PUT") {
+    const { user, response } = await requireRole(request, env, ["owner", "warehouse"]);
+    if (response) return response;
+    const body = await readJson(request);
+    const result = await store.setCatalog(body.products);
+    if (!result.ok) return json({ error: result.error }, 400);
+    await store.log(user, "CATALOG_UPDATE", `${result.products.length} produk`);
+    return json({ ok: true, products: result.products });
+  }
+
+  /* ---------------- Pesanan Toko ---------------- */
+
+  if (path === "/api/orders" && method === "POST") {
+    const { user, response } = await requireRole(request, env, ["customer"]);
+    if (response) return response;
+    const result = await store.createOrder(user, await readJson(request));
+    if (!result.ok) return json({ error: result.error }, 400);
+    await store.log(user, "ORDER_CREATE", `${result.order.code} (${result.order.total})`);
+    return json({ order: result.order }, 201);
+  }
+
+  if (path === "/api/orders" && method === "GET") {
+    const { user, response } = await requireRole(request, env, ["customer", "owner", "cashier"]);
+    if (response) return response;
+    const all = user.role !== "customer";
+    return json({ orders: await store.listOrders(user, all) });
+  }
+
+  const orderMatch = path.match(/^\/api\/orders\/([^/]+)$/);
+  if (orderMatch && method === "PATCH") {
+    const { user, response } = await requireRole(request, env, ["owner", "cashier"]);
+    if (response) return response;
+    const body = await readJson(request);
+    const result = await store.updateOrderStatus(decodeURIComponent(orderMatch[1]), body.status);
+    if (!result.ok) return json({ error: result.error }, 400);
+    await store.log(user, "ORDER_STATUS", `${result.order.code} -> ${body.status}`);
+    return json({ order: result.order });
+  }
+
   if (path === "/api/employees" && method === "GET") {
     const { response } = await requireRole(request, env, ["owner"]);
     if (response) return response;
@@ -579,12 +1004,24 @@ export default {
     }
 
     const internalPath = resolveInternalPath(url.pathname);
+
+    // Modul Toko (customer) kini punya pintu masuk sendiri.
+    if (
+      url.pathname === "/page/customer" ||
+      url.pathname.startsWith("/page/customer/") ||
+      url.pathname === "/customer" ||
+      url.pathname.startsWith("/customer/")
+    ) {
+      return redirect("/toko/");
+    }
+
     const roles = allowedRolesFor(internalPath);
     if (roles) {
       const user = await currentUser(request, env);
       if (!user) {
+        const loginPath = internalPath.startsWith("/toko") ? "/toko/login/" : "/login/";
         const next = encodeURIComponent(url.pathname + url.search);
-        return redirect(`/login/?next=${next}`);
+        return redirect(`${loginPath}?next=${next}`);
       }
       if (!roles.includes(user.role)) {
         return redirect(`${ROLE_LANDING[user.role]}?error=forbidden`);
