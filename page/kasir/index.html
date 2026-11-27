@@ -148,10 +148,19 @@
         </div>
     </header>
 
+    <nav class="bg-white border-b border-slate-200 px-4 sm:px-6 py-2 sticky top-[68px] z-20">
+        <div class="max-w-[1600px] mx-auto flex gap-2 overflow-x-auto">
+            <button onclick="showCashierTab('pos')" data-cashier-tab="pos" class="cashier-tab px-4 py-2 rounded-lg text-xs font-bold bg-agri-700 text-white">POS</button>
+            <button onclick="showCashierTab('crm')" data-cashier-tab="crm" class="cashier-tab px-4 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100">CRM & Broadcast</button>
+            <button onclick="showCashierTab('customers')" data-cashier-tab="customers" class="cashier-tab px-4 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100">Database Pelanggan</button>
+            <button onclick="showCashierTab('orders')" data-cashier-tab="orders" class="cashier-tab px-4 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100">Status Pesanan (Online)</button>
+        </div>
+    </nav>
+
     <!-- =========================================================================
          MAIN SPLIT WORKSPACE: KIRI (KATALOG VISUAL) & KANAN (CRM + KERANJANG POS)
     ========================================================================== -->
-    <main class="flex-1 max-w-[1600px] w-full mx-auto p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+    <main id="cashier-pos-panel" class="flex-1 max-w-[1600px] w-full mx-auto p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
 
         <!-- =====================================================================
              KOLOM KIRI (7 KOLOM): SCANNER BARCODE & KATALOG VISUAL PRODUK
@@ -301,6 +310,43 @@
             </div>
         </aside>
 
+    </main>
+
+    <main id="cashier-crm-panel" class="hidden flex-1 max-w-[1200px] w-full mx-auto p-4 sm:p-6">
+        <section class="w-full bg-white rounded-2xl border border-slate-200 p-5 sm:p-7 space-y-5">
+            <div><h2 class="text-xl font-extrabold text-agri-950">CRM & Broadcast WhatsApp</h2><p class="text-sm text-slate-500 mt-1">Siapkan pesan produk baru atau diskon untuk segmen pelanggan. Pesan dibuka di WhatsApp agar kasir dapat meninjau dan mengirimnya.</p></div>
+            <div class="grid sm:grid-cols-2 gap-4">
+                <label class="text-xs font-bold text-slate-700">Jenis informasi
+                    <select id="campaign-kind" class="mt-1 w-full rounded-xl border border-slate-300 p-2.5 text-sm"><option value="produk">Produk baru</option><option value="diskon">Diskon / promo</option></select>
+                </label>
+                <label class="text-xs font-bold text-slate-700">Target pelanggan
+                    <select id="campaign-segment" class="mt-1 w-full rounded-xl border border-slate-300 p-2.5 text-sm"><option value="all">Semua pelanggan</option><option value="online">Pelanggan online</option><option value="offline">Pelanggan offline</option></select>
+                </label>
+                <label class="text-xs font-bold text-slate-700">Minat kategori belanja
+                    <select id="campaign-category" class="mt-1 w-full rounded-xl border border-slate-300 p-2.5 text-sm"><option value="all">Semua kategori</option></select>
+                </label>
+                <label class="text-xs font-bold text-slate-700 sm:col-span-2">Produk / nama promo
+                    <input id="campaign-subject" class="mt-1 w-full rounded-xl border border-slate-300 p-2.5 text-sm" placeholder="Contoh: Benih padi Inpari 32 / Diskon akhir musim">
+                </label>
+                <label class="text-xs font-bold text-slate-700 sm:col-span-2">Detail pesan
+                    <textarea id="campaign-message" rows="3" class="mt-1 w-full rounded-xl border border-slate-300 p-2.5 text-sm" placeholder="Tulis detail produk atau diskon, masa berlaku, dan ajakan berkunjung."></textarea>
+                </label>
+            </div>
+            <div class="flex flex-wrap items-center gap-3"><button onclick="prepareCampaign()" class="px-4 py-2.5 rounded-xl bg-agri-700 text-white text-sm font-bold">Siapkan pesan pelanggan</button><span id="campaign-result" class="text-xs text-slate-500"></span></div>
+            <div id="campaign-list" class="space-y-2"></div>
+        </section>
+    </main>
+
+    <main id="cashier-customers-panel" class="hidden flex-1 max-w-[1200px] w-full mx-auto p-4 sm:p-6">
+        <section class="w-full bg-white rounded-2xl border border-slate-200 p-5 sm:p-7 space-y-5">
+            <div class="flex flex-wrap justify-between gap-3 items-end"><div><h2 class="text-xl font-extrabold text-agri-950">Database Pelanggan</h2><p class="text-sm text-slate-500 mt-1">Pelanggan akun toko dan pelanggan offline tersimpan pada database pelanggan yang sama.</p></div><input id="customer-directory-search" oninput="renderCustomerDirectory()" class="rounded-xl border border-slate-300 px-3 py-2 text-sm" placeholder="Cari nama, HP, jenis..."></div>
+            <form onsubmit="createOfflineCustomer(event)" class="grid sm:grid-cols-4 gap-2 p-3 rounded-xl bg-agri-50 border border-agri-200"><input id="offline-name" required class="rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Nama pelanggan"><input id="offline-phone" required class="rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Nomor HP"><input id="offline-address" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Alamat"><button class="rounded-lg bg-agri-700 text-white text-sm font-bold px-3 py-2">Tambah pelanggan offline</button></form>
+            <div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead class="text-xs uppercase text-slate-500 border-b"><tr><th class="py-3 pr-3">Pelanggan</th><th class="py-3 pr-3">Sumber</th><th class="py-3 pr-3">Pesanan online</th><th class="py-3 pr-3">Belanja tercatat</th><th class="py-3">Kontak</th></tr></thead><tbody id="customer-directory-body"></tbody></table></div>
+        </section>
+    </main>
+
+    <main id="cashier-orders-panel" class="hidden flex-1 max-w-[1200px] w-full mx-auto p-4 sm:p-6">
+        <section class="w-full bg-white rounded-2xl border border-slate-200 p-5 sm:p-7 space-y-4"><div class="flex justify-between items-center gap-3"><div><h2 class="text-xl font-extrabold text-agri-950">Status Pesanan Online</h2><p class="text-sm text-slate-500 mt-1">Daftar dan status langsung dari pesanan toko/admin yang sama.</p></div><button onclick="loadOnlineOrders()" class="px-3 py-2 bg-agri-700 text-white text-xs font-bold rounded-lg">Muat ulang</button></div><div id="online-orders-list" class="space-y-3"></div></section>
     </main>
 
     <!-- =========================================================================
@@ -620,11 +666,7 @@
         ];
 
         // Database CRM Pelanggan
-        let crmCustomers = [
-            { id: 'MBR-001', name: 'H. Slamet Riyadi (Gapoktan Makmur)', phone: '081228901122', address: 'Desa Wonosari', isMember: true, discount: 5, points: 320 },
-            { id: 'MBR-002', name: 'Ibu Siti Aminah', phone: '085741229900', address: 'Kec. Banyumanik', isMember: true, discount: 5, points: 150 },
-            { id: 'MBR-003', name: 'Pak Joko Susilo', phone: '081390887766', address: 'Desa Karangjati', isMember: true, discount: 10, points: 640 }
-        ];
+        let crmCustomers = [];
 
         let selectedCustomer = null; // null = Pelanggan Umum
         let cart = []; // { sku, name, price, image, qty, maxStock }
@@ -740,6 +782,7 @@
                 taxAmount: calc.taxAmount,
                 total: calc.grandTotal,
                 cashier: 'Kasir',
+                customer: selectedCustomer ? { id: selectedCustomer.id, name: selectedCustomer.name, phone: selectedCustomer.phone } : null,
                 items: soldItems.map(item => ({
                     sku: item.sku,
                     qty: item.qty,
@@ -1025,19 +1068,19 @@
             const container = document.getElementById('crm-member-list');
 
             const list = crmCustomers.filter(c =>
-                c.name.toLowerCase().includes(q) ||
-                c.phone.includes(q) ||
-                c.id.toLowerCase().includes(q)
+                String(c.name || '').toLowerCase().includes(q) ||
+                String(c.phone || '').includes(q) ||
+                String(c.id || '').toLowerCase().includes(q)
             );
 
             container.innerHTML = list.map(c => `
                 <div onclick="selectCustomer('${c.id}')" class="p-3 rounded-xl border border-slate-200 hover:border-agri-500 hover:bg-agri-50/50 cursor-pointer flex items-center justify-between transition">
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="font-bold text-xs text-slate-900">${c.name}</span>
-                            <span class="px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-800 rounded">Diskon ${c.discount}%</span>
+                            <span class="font-bold text-xs text-slate-900">${escapeHtml(c.name)}</span>
+                            <span class="px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-800 rounded">${c.type === 'offline' ? 'Offline' : 'Online'}</span>
                         </div>
-                        <p class="text-[11px] text-slate-500 font-mono mt-0.5">${c.phone} &bull; ${c.points} Poin</p>
+                        <p class="text-[11px] text-slate-500 font-mono mt-0.5">${escapeHtml(c.phone)}${c.address ? ' &bull; ' + escapeHtml(c.address) : ''}</p>
                     </div>
                     <span class="text-xs font-bold text-agri-700">Pilih &rarr;</span>
                 </div>
@@ -1053,13 +1096,14 @@
             document.getElementById('crm-avatar').className = 'w-9 h-9 rounded-full bg-agri-600 text-white flex items-center justify-center font-bold text-xs flex-shrink-0';
             document.getElementById('crm-name').textContent = cust.name;
             document.getElementById('crm-badge').classList.remove('hidden');
-            document.getElementById('crm-phone').textContent = `WA: ${cust.phone} • Diskon Member ${cust.discount}%`;
+            document.getElementById('crm-badge').textContent = cust.type === 'offline' ? 'Offline' : 'Online';
+            document.getElementById('crm-phone').textContent = `WA: ${cust.phone || '—'} • ${cust.type === 'offline' ? 'Pelanggan offline' : 'Akun toko online'}`;
 
             // Terapkan diskon member otomatis
-            document.getElementById('discount-percent-input').value = cust.discount;
+            document.getElementById('discount-percent-input').value = Number(cust.discount) || 0;
             recalculateTotals();
             closeCrmModal();
-            showToast(`Member "${cust.name}" dipilih (Diskon ${cust.discount}% aktif).`, 'success');
+            showToast(`Pelanggan "${cust.name}" dipilih.`, 'success');
         }
 
         function selectGuestCustomer() {
@@ -1074,26 +1118,113 @@
             closeCrmModal();
         }
 
-        function handleRegisterCustomer(event) {
+        async function handleRegisterCustomer(event) {
             event.preventDefault();
             const name = document.getElementById('new-cust-name').value.trim();
             const phone = document.getElementById('new-cust-phone').value.trim();
             const address = document.getElementById('new-cust-address').value.trim();
 
-            const newMember = {
-                id: 'MBR-' + Math.floor(100 + Math.random() * 900),
-                name,
-                phone,
-                address,
-                isMember: true,
-                discount: 5, // Diskon member baru 5%
-                points: 50
-            };
+            try {
+                const res = await fetch('/api/customers', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, phone, address }) });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Gagal menyimpan pelanggan');
+                await loadPosCustomers();
+                selectCustomer(data.customer.id);
+                event.target.reset();
+                showToast(`Pelanggan "${name}" tersimpan di database bersama.`, 'success');
+            } catch (error) { showToast(error.message, 'error'); }
+        }
 
-            crmCustomers.unshift(newMember);
-            selectCustomer(newMember.id);
-            event.target.reset();
-            showToast(`Pelanggan baru "${name}" terdaftar ke database CRM!`, 'success');
+        function escapeHtml(value) {
+            return String(value || '').replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+        }
+
+        function showCashierTab(tab) {
+            const panels = { pos: 'cashier-pos-panel', crm: 'cashier-crm-panel', customers: 'cashier-customers-panel', orders: 'cashier-orders-panel' };
+            Object.entries(panels).forEach(([key, id]) => document.getElementById(id).classList.toggle('hidden', key !== tab));
+            document.querySelectorAll('.cashier-tab').forEach(button => {
+                const active = button.dataset.cashierTab === tab;
+                button.className = `cashier-tab px-4 py-2 rounded-lg text-xs font-bold ${active ? 'bg-agri-700 text-white' : 'text-slate-600 hover:bg-slate-100'}`;
+            });
+            if (tab === 'crm' || tab === 'customers') loadPosCustomers();
+            if (tab === 'orders') loadOnlineOrders();
+        }
+
+        async function loadPosCustomers() {
+            try {
+                const res = await fetch('/api/customers', { credentials: 'same-origin' });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Gagal memuat pelanggan');
+                crmCustomers = data.customers || [];
+                const categorySelect = document.getElementById('campaign-category');
+                if (categorySelect) {
+                    const selected = categorySelect.value;
+                    const categories = [...new Set(crmCustomers.flatMap(c => c.interests || []))].sort();
+                    categorySelect.innerHTML = '<option value="all">Semua kategori</option>' + categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join('');
+                    if (categories.includes(selected)) categorySelect.value = selected;
+                }
+                renderCustomerList();
+                renderCustomerDirectory();
+            } catch (error) { showToast(error.message, 'error'); }
+        }
+
+        function renderCustomerDirectory() {
+            const body = document.getElementById('customer-directory-body');
+            if (!body) return;
+            const q = (document.getElementById('customer-directory-search')?.value || '').toLowerCase().trim();
+            const rows = crmCustomers.filter(c => [c.name, c.phone, c.email, c.type].join(' ').toLowerCase().includes(q));
+            body.innerHTML = rows.map(c => `<tr class="border-b border-slate-100"><td class="py-3 pr-3"><strong>${escapeHtml(c.name)}</strong><div class="text-xs text-slate-500">${escapeHtml(c.email || c.address)}</div></td><td class="py-3 pr-3"><span class="rounded-full px-2 py-1 text-xs ${c.type === 'offline' ? 'bg-violet-50 text-violet-700' : 'bg-sky-50 text-sky-700'}">${c.type === 'offline' ? 'Offline' : 'Online'}</span></td><td class="py-3 pr-3">${c.onlineOrders || 0}</td><td class="py-3 pr-3">${formatRupiah(c.totalSpent || 0)}</td><td class="py-3">${escapeHtml(c.phone || '—')}</td></tr>`).join('') || '<tr><td colspan="5" class="py-8 text-center text-slate-400">Belum ada pelanggan untuk filter ini.</td></tr>';
+        }
+
+        async function createOfflineCustomer(event) {
+            event.preventDefault();
+            try {
+                const payload = { name: document.getElementById('offline-name').value.trim(), phone: document.getElementById('offline-phone').value.trim(), address: document.getElementById('offline-address').value.trim() };
+                const res = await fetch('/api/customers', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Gagal menyimpan pelanggan');
+                event.target.reset(); await loadPosCustomers(); showToast('Pelanggan offline tersimpan pada database bersama.', 'success');
+            } catch (error) { showToast(error.message, 'error'); }
+        }
+
+        function prepareCampaign() {
+            const kind = document.getElementById('campaign-kind').value;
+            const segment = document.getElementById('campaign-segment').value;
+            const category = document.getElementById('campaign-category').value;
+            const subject = document.getElementById('campaign-subject').value.trim();
+            const detail = document.getElementById('campaign-message').value.trim();
+            if (!subject || !detail) { showToast('Isi nama produk/promo dan detail pesan.', 'warning'); return; }
+            const recipients = crmCustomers.filter(c => c.phone && (segment === 'all' || c.type === segment) && (category === 'all' || (c.interests || []).includes(category)));
+            const lead = kind === 'diskon' ? 'Promo khusus untuk Anda' : 'Info produk baru';
+            const list = document.getElementById('campaign-list');
+            document.getElementById('campaign-result').textContent = `${recipients.length} pelanggan cocok dengan target.`;
+            list.innerHTML = recipients.map(c => {
+                const digits = String(c.phone).replace(/\D/g, '').replace(/^0/, '62');
+                const message = `Halo ${c.name}, ${lead}: ${subject}. ${detail} — Sahabat-AI`;
+                return `<div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 p-3"><div><strong class="text-sm">${escapeHtml(c.name)}</strong><p class="text-xs text-slate-500">${escapeHtml(c.phone)} · ${c.type === 'offline' ? 'Offline' : 'Online'}</p></div><a target="_blank" rel="noopener" href="https://wa.me/${encodeURIComponent(digits)}?text=${encodeURIComponent(message)}" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white">Tinjau & kirim WhatsApp</a></div>`;
+            }).join('') || '<p class="rounded-xl bg-amber-50 p-3 text-xs text-amber-800">Tidak ditemukan pelanggan yang memiliki nomor telepon pada segmen ini.</p>';
+        }
+
+        async function loadOnlineOrders() {
+            const box = document.getElementById('online-orders-list');
+            box.innerHTML = '<p class="py-8 text-center text-sm text-slate-400">Memuat pesanan...</p>';
+            try {
+                const res = await fetch('/api/orders', { credentials: 'same-origin' });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Gagal memuat pesanan');
+                const orders = data.orders || [];
+                box.innerHTML = orders.map(o => `<article class="rounded-xl border border-slate-200 p-4"><div class="flex flex-wrap justify-between gap-3"><div><strong>${escapeHtml(o.code)}</strong><p class="text-xs text-slate-500 mt-1">${escapeHtml(o.customer?.name)} · ${escapeHtml(o.customer?.phone)} · ${new Date(o.createdAt).toLocaleString('id-ID')}</p><p class="text-xs mt-2">${(o.items || []).map(i => `${escapeHtml(i.name)} × ${i.qty}`).join(', ')}</p></div><div class="text-right"><strong>${formatRupiah(o.total)}</strong><p class="text-xs text-slate-500 mt-1">Pembayaran: ${escapeHtml(o.paymentStatus || '—')}</p><select onchange="changeOnlineOrderStatus('${encodeURIComponent(o.id)}', this.value)" class="mt-2 rounded-lg border border-slate-300 px-2 py-1 text-xs">${['baru','diproses','dikirim','selesai','batal'].map(s => `<option value="${s}" ${o.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></div></div></article>`).join('') || '<p class="py-8 text-center text-sm text-slate-400">Belum ada pesanan online.</p>';
+            } catch (error) { box.innerHTML = `<p class="text-sm text-rose-600">${escapeHtml(error.message)}</p>`; }
+        }
+
+        async function changeOnlineOrderStatus(encodedId, status) {
+            try {
+                const res = await fetch('/api/orders/' + encodedId, { method: 'PATCH', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Gagal mengubah status pesanan');
+                showToast(`Status pesanan ${data.order.code} diperbarui.`, 'success');
+                loadOnlineOrders();
+            } catch (error) { showToast(error.message, 'error'); loadOnlineOrders(); }
         }
 
         /**
@@ -1340,6 +1471,7 @@
             renderCatalog();
             renderCart();
             loadBackendCatalog();
+            loadPosCustomers();
             requestWarehouseCatalog();
         };
     </script>
