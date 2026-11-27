@@ -29,11 +29,12 @@ Browser ──> Cloudflare Worker (worker.js)
                     ├── customers                          (akun pelanggan)
                     ├── catalog                            (katalog bersama)
                     ├── shop_orders                        (pesanan Toko)
-                    └── pos_sales                          (penjualan Kasir)
+                    └── pos_sales                          (penjualan Kasir + pelanggan terkait)
 ```
 
 - **Satu sumber katalog:** `GET /api/catalog` bersifat publik dan hanya mengembalikan field aman (`id`, `sku`, `name`, `category`, `price`, `unit`, `stock`, `image`, `active`, `updatedAt`). Gudang, Kasir, Admin, dan Toko membaca/menulis katalog yang sama lewat API; harga pokok/HPP tidak pernah dikirim ke publik.
 - **Satu sumber transaksi:** checkout Toko memanggil `POST /api/orders`; penjualan kasir memanggil `POST /api/pos/sales`. Keduanya tersimpan di Durable Object yang sama, divalidasi backend (harga, stok, diskon, pajak, total), dan mengurangi stok `catalog`. Pembatalan pesanan Toko mengembalikan stok.
+- **Satu database pelanggan:** akun pelanggan online dan pelanggan offline kasir disimpan pada tabel `customers` di Durable Object yang sama. Endpoint staf `/api/customers` membaca daftar gabungan dan mencatat pelanggan offline. `pos_sales.customer_id` mengaitkan transaksi POS ke pelanggan untuk rekap pembelian dan minat kategori.
 - **Idempoten:** `clientId` pada checkout dan penjualan kasir mencegah dobel submit/dobel potong stok. Pengiriman ulang mengembalikan catatan yang sudah ada.
 - **Satu sistem autentikasi:** customer memakai `/api/customer/register` dan `/api/customer/login`, sesi tetap cookie `sa_session` (HttpOnly, SameSite=Lax, 12 jam) dengan role `customer`. Staf tetap memakai `/api/auth/login`. Role `customer` tidak bisa membuka `/erp/`, `/kasir/`, `/gudang/`, atau `/admin/`; role staf tidak dipakai untuk checkout pelanggan.
 - **Same-origin:** karena `/toko/` berada di Worker yang sama, keranjang memakai `localStorage` browser yang sama dengan modul lain. `BroadcastChannel` (`agristock_pos_sync`) tetap dipakai untuk sinkronisasi antar halaman internal.
@@ -53,7 +54,7 @@ Semua pengguna masuk lewat **`/login/`**. Pilih **Jenis akun** terlebih dahulu:
 - Password di-hash dengan **PBKDF2-SHA256 (100.000 iterasi + salt acak 16 byte, batas maksimal WebCrypto Cloudflare Workers)**. Tidak ada password plain text di database maupun browser.
 - Sesion memakai cookie `HttpOnly` + `SameSite=Lax` (`Secure` otomatis di HTTPS), berlaku 12 jam.
 - **RBAC ditegakkan di Worker**: sebelum halaman internal dikirim, peran dicek dari sesi di database. Menu yang tidak diizinkan juga disembunyikan di frontend.
-- Endpoint API: `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`, `/api/employees` (GET/POST/PATCH/DELETE, owner only), `/api/activity` (owner only), `/api/customer/register`, `/api/customer/login`, `/api/customer/me`, `/api/catalog` (GET publik, PUT owner/warehouse), `/api/payment-methods` (publik), `/api/orders` (POST customer, GET customer/owner/cashier), `/api/orders/:id` (PATCH owner/cashier), `/api/orders/:id/payment` (PATCH owner/cashier), `/api/pos/sales` (POST owner/cashier).
+- Endpoint API: `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`, `/api/employees` (GET/POST/PATCH/DELETE, owner only), `/api/activity` (owner only), `/api/customer/register`, `/api/customer/login`, `/api/customer/me`, `/api/catalog` (GET publik, PUT owner/warehouse), `/api/payment-methods` (publik), `/api/orders` (POST customer, GET customer/owner/cashier), `/api/orders/:id` (PATCH owner/cashier), `/api/orders/:id/payment` (PATCH owner/cashier), `/api/pos/sales` (POST owner/cashier), `/api/customers` (GET/POST owner/cashier; pelanggan offline disimpan di tabel pelanggan yang sama).
 - Akun bawaan pemilik hanya dipakai saat inisialisasi. Ganti lewat `vars` `INITIAL_OWNER_EMAIL` / `INITIAL_OWNER_PASSWORD` di `wrangler.jsonc` sebelum deploy pertama, lalu buat akun kasir/gudang lewat dashboard.
 - Customer memakai akun backend sendiri (`customers`), sehingga bisa masuk dari perangkat lain tanpa bergantung pada `localStorage`.
 
@@ -75,6 +76,7 @@ Semua pengguna masuk lewat **`/login/`**. Pilih **Jenis akun** terlebih dahulu:
 - **Pesanan:** filter status/pencarian, ubah status (Baru → Diproses → Dikirim → Selesai), batalkan (stok dikembalikan).
 - **Produk:** tambah/edit produk, atur harga & stok, aktif/nonaktifkan dari toko.
 - **Pelanggan:** rekap pelanggan dari pesanan (jumlah pesanan, total belanja, transaksi terakhir).
+- **Kasir:** empat menu POS, CRM & Broadcast, Database Pelanggan, dan Status Pesanan Online. Status pesanan memakai `/api/orders` yang sama dengan admin. CRM dapat menyaring penerima berdasarkan kanal online/offline dan kategori dari produk yang pernah dibeli. Kampanye WhatsApp membentuk pesan per pelanggan dan membuka `wa.me` untuk ditinjau/dikirim petugas; pengiriman massal otomatis memerlukan integrasi WhatsApp Business API yang belum tersedia.
 - **Reset demo** untuk mengembalikan data contoh.
 
 > Catatan: autentikasi staf & RBAC memakai backend Worker + Durable Object. Analitik ERP masih membaca antrean `agripos_pending_sales` di `localStorage` (lihat `page/erp/README.md`), tetapi penjualan kasir kini **juga** dicatat di tabel backend `pos_sales` agar stok dan transaksi menjadi sumber bersama dengan Toko.
